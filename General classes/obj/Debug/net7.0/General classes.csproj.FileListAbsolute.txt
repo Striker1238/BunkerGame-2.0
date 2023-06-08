@@ -1,0 +1,5 @@
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.csproj.AssemblyReference.cache
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.AssemblyInfoInputs.cache
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.AssemblyInfo.cs
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.csproj.CoreCompileInputs.cache

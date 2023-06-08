@@ -13,8 +13,11 @@ using UnityEditor.Search;
 using System.Threading;
 using UnityEngine.Analytics;
 using UnityEditor.PackageManager.Requests;
+using BunkerGame.ClassUser;
 
-namespace BunkerGame.Client
+
+
+namespace BunkerGame.ClassClient
 {
     public delegate void RequestMethod(string val);
     public struct Request
@@ -37,7 +40,7 @@ namespace BunkerGame.Client
             { 1,"CREATE_PROFILE"},
             { 2,"LOGIN_PROFILE"},
             { 3,"CHANGE_DATA_PROFILE"},
-            { 4,"GET_LIST_LOBBY"},
+            { 4,"GET_LIST_ACTIVE_LOBBY"},
         };
         public Dictionary<int, string> TypeGET { get; } = new Dictionary<int, string>()
         {
@@ -176,20 +179,26 @@ namespace BunkerGame.Client
                             //Пока пусто, тк тут результат регистрации
                             break;
                         case 3:
+                            //Получаем информацию о корректных данных пользователя которым логинимся
                             data = await streamReader.ReadLineAsync();
                             _request = new Request { method = _ThisClient.isCorrectData, data = data };
                             queueMethods.Enqueue(_request);
                             break;
                         case 5:
+                            //Получаем информацию об успешном обновлении данных (пока что только аватар) 
                             _request = new Request { method = _ThisClient.isSuccsessfullChangeAvatar, data = Convert.ToBase64String(File.ReadAllBytes(_Path)) };
                             queueMethods.Enqueue(_request);
                             break;
                         case 7:
-                            //Список лобби, лучше по одному лобби в строку
-                            //Будем считывать одно лобби со всеми данными в нем
-                            data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.AddLobbyInList, data = data };
-                            queueMethods.Enqueue(_request);
+                            //Получаем количество активных лобби
+                            var countActiveLobby = await streamReader.ReadLineAsync();
+                            //Начинаем получать информацию о каждом активном лобби
+                            for (int i = 0; i < Convert.ToUInt32(countActiveLobby); i++)
+                            {
+                                data = await streamReader.ReadLineAsync();
+                                _request = new Request { method = _ThisClient.AddLobbyInList, data = data };
+                                queueMethods.Enqueue(_request);
+                            }
                             break;
                         default:
                             break;
@@ -208,16 +217,6 @@ namespace BunkerGame.Client
 
     }
 
-    /// <summary>
-    /// Объект сохранения в базу данных(вид данных польлзователя)
-    /// </summary>
-    [System.Serializable]
-    public class User
-    {
-        public string? UserName;
-        public string? Login;
-        public string? Password;
-        public string? AvatarBase64;
-    }
+
     
 }

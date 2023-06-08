@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using BunkerGame.Client;
+using BunkerGame.ClassClient;
 using System;
 using UnityEngine.XR;
 using System.IO;

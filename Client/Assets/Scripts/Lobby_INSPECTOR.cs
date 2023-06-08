@@ -1,4 +1,4 @@
-using BunkerGame.Lobby;
+using BunkerGame.ClassLobby;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

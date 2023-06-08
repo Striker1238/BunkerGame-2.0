@@ -8,9 +8,9 @@ using System.Text;
 using System.IO;
 
 
-using BunkerGame.Client;
-using BunkerGame.Player;
-using BunkerGame.Lobby;
+using BunkerGame.ClassClient;
+using BunkerGame.ClassPlayer;
+using BunkerGame.ClassLobby;
 
 
 
@@ -104,6 +104,6 @@ public class Client_INSPECTOR : MonoBehaviour
         ThisPlayer = new Player();
         ThisPlayer.UserInfo = JsonUtility.FromJson<User>(data);
         isConnectToServer = true;
-        scenesControll.ChangeScene(1);
+        scenesControll.ChangeScene(2);
     }
 }
