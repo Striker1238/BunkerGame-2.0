@@ -11,11 +11,6 @@ using System.IO;
 using System.Transactions;
 using System.Text.Json;
 using MongoDB.Driver.Builders;
-using BunkerGame.ClassClient;
-using BunkerGame.ClassPlayer;
-using BunkerGame.ClassLobby;
-using static System.Net.WebRequestMethods;
-
 
 namespace BunkerGame.Database
 {
@@ -143,9 +138,17 @@ namespace BunkerGame.Database
                             }
                             else
                                 await streamWriter.WriteLineAsync("8");
-
                             break;
+                        case "CREATE_LOBBY":
+                            Console.WriteLine($"{tcpClient.Client.RemoteEndPoint} - Send a request on create new lobby");
+                            message = await streamReader.ReadLineAsync();
+                            var isSuccessfull_CreateLobby = await CreateNewLobby(message);
 
+                            if (isSuccessfull_CreateLobby)
+                                await streamWriter.WriteLineAsync("9");
+                            else
+                                await streamWriter.WriteLineAsync("10");
+                            break;
 
                         default:
                             message = await streamReader.ReadLineAsync();
@@ -225,10 +228,9 @@ namespace BunkerGame.Database
         private async Task<bool> CreateNewLobby(string message)
         {
             Lobby? newLobby = JsonSerializer.Deserialize<Lobby>(message);
+            var filter = new BsonDocument { { "IsEnd", newLobby.IndexLobby } };
 
-            var filter = new BsonDocument { { "Index", newLobby.Index } };
-
-            if (newLobby != null && DatabaseControll.IsDocumentExistsAsync<Lobby>("Lobby", filter).Result)
+            if (newLobby != null && !DatabaseControll.IsDocumentExistsAsync<Lobby>("Lobby", filter).Result)
             {
                 await DatabaseControll.AddNewDocumentAsync<Lobby>("Lobby", newLobby);
                 return true;
@@ -244,7 +246,6 @@ namespace BunkerGame.Database
         internal protected MongoClient client;
         internal IMongoDatabase database;
         internal string dbName;
-        internal string usersCollection = "Users";
 
         public Database(string _dbName, string _connectString = "mongodb://localhost:27017")
         {
@@ -305,7 +306,11 @@ namespace BunkerGame.Database
         */
     }
 }
-///[BsonIgnoreExtraElements] для фикса ошибки, если поля не принципиальны
+/// <summary>
+/// [BsonIgnoreExtraElements] для фикса ошибки, если поля не принципиальны, подробнее по ссылке
+/// https://metanit.com/sharp/mongodb/1.7.php
+/// </summary>
+
 public class User
 {
     public ObjectId Id { get; set; }
@@ -313,4 +318,10 @@ public class User
     public string? Login { get; set; }
     public string? Password { get; set; }
     public string? AvatarBase64 { get; set; }
+}
+public class Lobby
+{
+    public string? IndexLobby { get; set; }
+    public List<BunkerGame.ClassLobby.InfoAboutPlayer> AllHero { get; set; }
+    public bool IsEnd { get; set; }
 }

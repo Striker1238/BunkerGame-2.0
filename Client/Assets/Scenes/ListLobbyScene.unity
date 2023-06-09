@@ -429,7 +429,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1837995355}
         m_TargetAssemblyTypeName: Lobby_INSPECTOR, Assembly-CSharp
-        m_MethodName: GetRequestListLobby
+        m_MethodName: CreateLobby
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

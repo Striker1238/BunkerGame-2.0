@@ -10,6 +10,7 @@ using System.IO;
 
 using BunkerGame.ClassClient;
 using BunkerGame.ClassPlayer;
+using BunkerGame.ClassUser;
 using BunkerGame.ClassLobby;
 
 
@@ -24,14 +25,6 @@ public class Client_INSPECTOR : MonoBehaviour
     [Header("Client stats")]
     public bool isConnectToServer;
 
-    [Header("Create Profile Objects")]
-    public TMP_InputField username_IF;
-    public TMP_InputField login_Reg_IF;
-    public TMP_InputField password_Reg_IF;
-
-    [Header("Login In Profile")]
-    public TMP_InputField login_Log_IF;
-    public TMP_InputField password_Log_IF;
 
     [Header("Player prefab")]
     //public GameObject PlayerPrefab;
@@ -74,16 +67,27 @@ public class Client_INSPECTOR : MonoBehaviour
 
 
     #region POST
-    public void CreateNewProfile() => ThisClient.CreateProfile(new User { UserName = username_IF.text, Login = login_Reg_IF.text, Password = password_Reg_IF.text, AvatarBase64 = Convert.ToBase64String(File.ReadAllBytes($"{Application.dataPath}/StreamingAssets/TESTIMG.jpg"))});
-    public void LoginInProfile() => ThisClient.LoginProfile(new User { Login = login_Log_IF.text, Password = password_Log_IF.text });
+    public void CreateNewProfile() => ThisClient.CreateProfile(new User 
+    { 
+        UserName = FindObjectOfType<LoginPageController>().username_IF.text, 
+        Login = FindObjectOfType<LoginPageController>().login_Reg_IF.text, 
+        Password = FindObjectOfType<LoginPageController>().password_Reg_IF.text, 
+        AvatarBase64 = Convert.ToBase64String(File.ReadAllBytes($"{Application.dataPath}/StreamingAssets/TESTIMG.jpg"))
+    });
+    public void LoginInProfile() => ThisClient.LoginProfile(new User 
+    { 
+        Login = FindObjectOfType<LoginPageController>().login_Log_IF.text, 
+        Password = FindObjectOfType<LoginPageController>().password_Log_IF.text 
+    });
     public void ChangeAvatarProfile(string Path) => ThisClient.ChangeAvatarOnClient(ThisPlayer.UserInfo, Path);
     public void GetListLobby() => ThisClient.GetListLobby();
+    public void CreateLobby(Lobby newLobby) => ThisClient.CreateLobby(newLobby);
     #endregion
 
 
     #region GET
     public void isCorrectData(string data) => CreateClientObj(data);
-    public void isSuccsessfullChangeAvatar(string data)
+    public void isSuccessfullChangeAvatar(string data)
     {
         ThisPlayer.UserInfo.AvatarBase64 = data;
 
@@ -91,6 +95,12 @@ public class Client_INSPECTOR : MonoBehaviour
             FindObjectOfType<ProfileControll>().LoadingProfileData(ThisPlayer.UserInfo);
     }
     public void AddLobbyInList(string data) => FindObjectOfType<Lobby_INSPECTOR>().AddLobbyInList(data);
+    public void isSuccessfullCreateLobby(string data) 
+    {
+        FindObjectOfType<Lobby_INSPECTOR>().AllLobby.Add(JsonUtility.FromJson<Lobby>(data));
+        //«десь что то еще будет
+    }
+    
     #endregion
 
 

@@ -1,4 +1,4 @@
-using BunkerGame.ClassClient;
+using BunkerGame.ClassUser;
 using System.Collections;
 using System.Collections.Generic;
 

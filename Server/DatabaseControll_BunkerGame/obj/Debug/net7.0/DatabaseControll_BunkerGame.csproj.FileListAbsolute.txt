@@ -60,3 +60,5 @@ D:\Projects\BunkerGame-2.0\Server\DatabaseControll_BunkerGame\bin\Debug\net7.0\r
 D:\Projects\BunkerGame-2.0\Server\DatabaseControll_BunkerGame\obj\Debug\net7.0\DatabaseControll_BunkerGame.csproj.CopyComplete
 D:\Projects\BunkerGame-2.0\Server\DatabaseControll_BunkerGame\obj\Debug\net7.0\DatabaseControll_BunkerGame.genruntimeconfig.cache
 D:\Projects\BunkerGame-2.0\Server\DatabaseControll_BunkerGame\obj\Debug\net7.0\ref\DatabaseControll_BunkerGame.dll
+D:\Projects\BunkerGame-2.0\Server\DatabaseControll_BunkerGame\bin\Debug\net7.0\General classes.dll
+D:\Projects\BunkerGame-2.0\Server\DatabaseControll_BunkerGame\bin\Debug\net7.0\General classes.pdb

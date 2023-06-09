@@ -3,3 +3,13 @@ D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.Gene
 D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.AssemblyInfoInputs.cache
 D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.AssemblyInfo.cs
 D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.csproj.CoreCompileInputs.cache
+D:\Projects\BunkerGame-2.0\General classes\bin\Debug\net7.0\General classes.deps.json
+D:\Projects\BunkerGame-2.0\General classes\bin\Debug\net7.0\General classes.dll
+D:\Projects\BunkerGame-2.0\General classes\bin\Debug\net7.0\General classes.pdb
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.dll
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\refint\General classes.dll
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\General classes.pdb
+D:\Projects\BunkerGame-2.0\General classes\obj\Debug\net7.0\ref\General classes.dll
+D:\Projects\BunkerGame-2.0\Client\Assets\Plugins\Debug\net7.0\General classes.deps.json
+D:\Projects\BunkerGame-2.0\Client\Assets\Plugins\Debug\net7.0\General classes.dll
+D:\Projects\BunkerGame-2.0\Client\Assets\Plugins\Debug\net7.0\General classes.pdb
