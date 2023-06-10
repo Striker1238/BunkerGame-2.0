@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
+using SFB;
 public class LoginPageController : MonoBehaviour
 {
     [Header("Page object")]
@@ -23,8 +23,11 @@ public class LoginPageController : MonoBehaviour
     public Button ChangePage_Button;
     public GameObject NotificationPref;
 
+    [Header("Path on file")]
+    public string AvatarPath;
 
     private bool isActiveLoginPage = true;
+
     public void ChangePage()
     {
         RegistrationPage.SetActive(LoginPage.activeSelf);
@@ -37,7 +40,6 @@ public class LoginPageController : MonoBehaviour
 
     public void ChangeVisiblePassword()
     {
-        
         password_Reg_IF.contentType = (password_Reg_IF.contentType == TMP_InputField.ContentType.Password) ? TMP_InputField.ContentType.Standard :TMP_InputField.ContentType.Password;
         password_Log_IF.contentType = (password_Reg_IF.contentType == TMP_InputField.ContentType.Password) ? TMP_InputField.ContentType.Standard :TMP_InputField.ContentType.Password;
         password_Reg_IF.ActivateInputField();
@@ -51,5 +53,19 @@ public class LoginPageController : MonoBehaviour
         notification.GetComponent<TextMeshProUGUI>().text = $"Server: {message}";
 
         notification.GetComponent<Notification>().NotificationFromServer(new Vector3(0,0,0));
+    }
+
+    /// <summary>
+    /// Показывает диалоговое окно для выбора файла
+    /// </summary>
+    public void ShowFileDialog()
+    {
+        //какие файлы вообще можно открыть
+        var extensions = new[] {  
+            new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ),
+            new ExtensionFilter("All Files", "*" ),
+        };
+        AvatarPath = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false)[0];
+        Debug.Log("Select: " + AvatarPath);
     }
 }
