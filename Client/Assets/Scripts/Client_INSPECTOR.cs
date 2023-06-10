@@ -7,7 +7,6 @@ using System;
 using System.Text;
 using System.IO;
 
-
 using BunkerGame.ClassClient;
 using BunkerGame.ClassPlayer;
 using BunkerGame.ClassUser;
@@ -67,21 +66,11 @@ public class Client_INSPECTOR : MonoBehaviour
 
 
     #region POST
-    public void CreateNewProfile() => ThisClient.CreateProfile(new User 
-    { 
-        UserName = FindObjectOfType<LoginPageController>().username_IF.text, 
-        Login = FindObjectOfType<LoginPageController>().login_Reg_IF.text, 
-        Password = FindObjectOfType<LoginPageController>().password_Reg_IF.text, 
-        AvatarBase64 = Convert.ToBase64String(File.ReadAllBytes($"{Application.dataPath}/StreamingAssets/TESTIMG.jpg"))
-    });
-    public void LoginInProfile() => ThisClient.LoginProfile(new User 
-    { 
-        Login = FindObjectOfType<LoginPageController>().login_Log_IF.text, 
-        Password = FindObjectOfType<LoginPageController>().password_Log_IF.text 
-    });
-    public void ChangeAvatarProfile(string Path) => ThisClient.ChangeAvatarOnClient(ThisPlayer.UserInfo, Path);
-    public void GetListLobby() => ThisClient.GetListLobby();
-    public void CreateLobby(Lobby newLobby) => ThisClient.CreateLobby(newLobby);
+    public void CreateNewProfile(User newUser) => ThisClient.CreateMessageForServer(1,newUser);
+    public void LoginInProfile(User user) => ThisClient.CreateMessageForServer(2, user);
+    public void ChangeAvatarProfile(User newData) => ThisClient.CreateMessageForServer(3, newData);
+    public void GetListLobby() => ThisClient.CreateMessageForServer<Lobby>(4);
+    public void CreateLobby(Lobby newLobby) => ThisClient.CreateMessageForServer(5, newLobby);
     #endregion
 
 
@@ -100,7 +89,6 @@ public class Client_INSPECTOR : MonoBehaviour
         FindObjectOfType<Lobby_INSPECTOR>().AllLobby.Add(JsonUtility.FromJson<Lobby>(data));
         //«десь что то еще будет
     }
-    
     #endregion
 
 
@@ -116,4 +104,6 @@ public class Client_INSPECTOR : MonoBehaviour
         isConnectToServer = true;
         scenesControll.ChangeScene(2);
     }
+
+    
 }

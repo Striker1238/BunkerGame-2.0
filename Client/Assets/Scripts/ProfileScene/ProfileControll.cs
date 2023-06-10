@@ -9,9 +9,13 @@ using UnityEngine.XR;
 using System.IO;
 using Unity.VisualScripting;
 using BunkerGame.ClassUser;
+using SFB;
 
 public class ProfileControll : MonoBehaviour
 {
+    [Header("Path on file")]
+    public string AvatarPath;
+
     [Header("Other")]
     public Image Avatar;
     public TMP_InputField Username_IF;
@@ -43,10 +47,28 @@ public class ProfileControll : MonoBehaviour
     /// <summary>
     /// Вызывается с помощью кнопки
     /// </summary>
-    public void ChandeAvatar()
+    public void ChangeAvatar()
     {
-        //Здесь ссылку файла изменить на то, что будет выбирать пользователь
-        FindObjectOfType<Client_INSPECTOR>().ChangeAvatarProfile($"{Application.dataPath}/StreamingAssets/TETSIMG2.png");
+        var thisUser = FindObjectOfType<Client_INSPECTOR>().ThisPlayer.UserInfo;
+
+        //Меняем аватар
+        thisUser.AvatarBase64 = Convert.ToBase64String(File.ReadAllBytes(GetPathOnFile()));
+
+        FindObjectOfType<Client_INSPECTOR>().ChangeAvatarProfile(thisUser);
     }
-    
+
+
+    /// <summary>
+    /// Показывает диалоговое окно для выбора файла
+    /// </summary>
+    public string GetPathOnFile()
+    {
+        //какие файлы вообще можно открыть
+        var extensions = new[] {
+            new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ),
+            new ExtensionFilter("All Files", "*" ),
+        };
+        return StandaloneFileBrowser.OpenFilePanel("Select your avatar", "", extensions, false)[0];
+    }
+
 }

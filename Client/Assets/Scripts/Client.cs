@@ -86,87 +86,36 @@ namespace BunkerGame.ClassClient
 
         }
 
-
-
-        public async void ClientDissconnect()
+        public async void CreateMessageForServer<T>(UInt16 POSTIndex, params T[] Object)
         {
-            queue.Enqueue(0);
-            await SendMessageAsync();
-        }
-        public async void CreateProfile(User _newUser)
-        {
-            newUser = _newUser;
-            queue.Enqueue(1);
-            await SendMessageAsync();
-        }
-        public async void LoginProfile(User _newUser)
-        {
-            newUser = _newUser;
-            queue.Enqueue(2);
-            await SendMessageAsync();
-        }
-        public async void ChangeAvatarOnClient(User _newUser, string Path)
-        {
-            newUser = _newUser;
-            _Path = Path;
-            queue.Enqueue(3);
-            await SendMessageAsync();
-        }
-        public async void GetListLobby ()
-        {
-            queue.Enqueue(4);
-            await SendMessageAsync();
-        }
-        public async void CreateLobby(Lobby _newLobby)
-        {
-            newLobby = _newLobby;
-            queue.Enqueue(5);
-            await SendMessageAsync();
+            queue.Enqueue(POSTIndex);
+            await SendMessageAsync(Object);
         }
 
 
+        public void ServerMessage(string? message) => Debug.Log($"Server send message: {TypeGET[Convert.ToInt32(message)]}");
 
-
-
-
-        public void ServerMessage(string? message) => Debug.Log($"Server answer: {TypeGET[Convert.ToInt32(message)]}");
-
-        User? newUser = new User();
-        Lobby? newLobby = new Lobby();
-        string? _Path = null;
-        Queue<byte> queue = new Queue<byte>();
-        async Task SendMessageAsync()
+        Queue<UInt16> queue = new Queue<UInt16>();
+        async Task SendMessageAsync<T>(params T[]? Object)
         {
             string? message = null;
+            if (Object.Length > 0)
+                message = JsonUtility.ToJson(Object[0]);
+
             await streamWriter.WriteLineAsync(TypePOST[queue.Peek()]);
-            switch (queue.Peek())
+
+            var index = queue.Dequeue();
+
+
+            if (index == 0)
             {
-                case 0:
-                    await streamWriter.FlushAsync();
-                    tcpClient.Client.Close();
-                    return;
-                case 1:
-                    message = JsonUtility.ToJson(newUser);
-                    await streamWriter.WriteLineAsync(message);
-                    break;
-                case 2:
-                    message = JsonUtility.ToJson(newUser);
-                    await streamWriter.WriteLineAsync(message);
-                    break;
-                case 3:
-                    newUser.AvatarBase64 = Convert.ToBase64String(File.ReadAllBytes(_Path));
-                    message = JsonUtility.ToJson(newUser);
-                    await streamWriter.WriteLineAsync(message);
-                    break;
-                case 5:
-                    message = JsonUtility.ToJson(newLobby);
-                    await streamWriter.WriteLineAsync(message);
-                    break;
-                default:
-                    break;
+                await streamWriter.FlushAsync();
+                tcpClient.Client.Close();
             }
+
+            await streamWriter.WriteLineAsync(message);
             await streamWriter.FlushAsync();
-            queue.Dequeue();
+            
         }
         async Task ReceiveMessageAsync()
         {
@@ -192,7 +141,7 @@ namespace BunkerGame.ClassClient
                             break;
                         case 5:
                             //ѕолучаем информацию об успешном обновлении данных (пока что только аватар) 
-                            _request = new Request { method = _ThisClient.isSuccessfullChangeAvatar, data = Convert.ToBase64String(File.ReadAllBytes(_Path)) };
+                            _request = new Request { method = _ThisClient.isSuccessfullChangeAvatar, data = "" };
                             queueMethods.Enqueue(_request);
                             break;
                         case 7:
@@ -208,7 +157,7 @@ namespace BunkerGame.ClassClient
                             break;
                         case 9:
                             //ѕолучаем успешность создани€ лобби, если успешно создано то запускаем у пользовател€ открыти€ лобби
-                            _request = new Request { method = _ThisClient.isSuccessfullCreateLobby, data = JsonUtility.ToJson(newLobby) };
+                            _request = new Request { method = _ThisClient.isSuccessfullCreateLobby, data = "" };// JsonUtility.ToJson(newLobby)
                             queueMethods.Enqueue(_request);
                             break;
                         default:

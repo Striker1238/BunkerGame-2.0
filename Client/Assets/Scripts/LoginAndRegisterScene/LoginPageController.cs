@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using SFB;
+
+using BunkerGame.ClassUser;
+using System;
+using System.IO;
+
 public class LoginPageController : MonoBehaviour
 {
     [Header("Page object")]
@@ -23,10 +27,26 @@ public class LoginPageController : MonoBehaviour
     public Button ChangePage_Button;
     public GameObject NotificationPref;
 
-    [Header("Path on file")]
-    public string AvatarPath;
+    
 
     private bool isActiveLoginPage = true;
+
+
+
+
+    public void CreateNewProfile()=>FindObjectOfType<Client_INSPECTOR>().CreateNewProfile
+        (new User{
+            UserName = username_IF.text,
+            Login = login_Reg_IF.text,
+            Password = password_Reg_IF.text,
+            AvatarBase64 = null,
+        });
+    public void LoginProfile()=>FindObjectOfType<Client_INSPECTOR>().LoginInProfile
+        (new User{
+            Login = login_Log_IF.text,
+            Password = password_Log_IF.text
+        });
+
 
     public void ChangePage()
     {
@@ -55,17 +75,5 @@ public class LoginPageController : MonoBehaviour
         notification.GetComponent<Notification>().NotificationFromServer(new Vector3(0,0,0));
     }
 
-    /// <summary>
-    /// Показывает диалоговое окно для выбора файла
-    /// </summary>
-    public void ShowFileDialog()
-    {
-        //какие файлы вообще можно открыть
-        var extensions = new[] {  
-            new ExtensionFilter("Image Files", "png", "jpg", "jpeg" ),
-            new ExtensionFilter("All Files", "*" ),
-        };
-        AvatarPath = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false)[0];
-        Debug.Log("Select: " + AvatarPath);
-    }
+    
 }
