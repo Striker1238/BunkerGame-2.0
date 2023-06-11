@@ -6,6 +6,7 @@ using UnityEngine;
 public class Lobby_INSPECTOR : MonoBehaviour
 {
     public List<Lobby> AllLobby = new List<Lobby>();
+    public string IndexSelectLobby = "";
 
     /// <summary>
     /// Запрос данных о всех лобби
@@ -30,11 +31,12 @@ public class Lobby_INSPECTOR : MonoBehaviour
 
     public void CreateLobby()
     {
-        var test = new Lobby() { IndexLobby = "Test" + Random.Range(100000, 999999), IsEnd = false };
+        var test = new Lobby() { Index = "Test" + Random.Range(100000, 999999), IsEnd = false };
         FindObjectOfType<Client_INSPECTOR>().CreateLobby(test);
     }
     public void ConnectToLobby()
     {
-
+        var _SelectLobby = AllLobby.Find(x => x.Index == IndexSelectLobby);
+        //if(_SelectLobby.AllHero.Count)
     }
 }

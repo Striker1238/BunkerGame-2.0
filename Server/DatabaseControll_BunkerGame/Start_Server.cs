@@ -321,7 +321,7 @@ public class User
 }
 public class Lobby
 {
-    public string? IndexLobby { get; set; }
+    public string? Index { get; set; }
     public List<BunkerGame.ClassLobby.InfoAboutPlayer> AllHero { get; set; }
     public bool IsEnd { get; set; }
 }

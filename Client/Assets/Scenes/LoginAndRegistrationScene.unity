@@ -722,9 +722,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1476040784}
-        m_TargetAssemblyTypeName: Client_INSPECTOR, Assembly-CSharp
-        m_MethodName: LoginInProfile
+      - m_Target: {fileID: 331399186}
+        m_TargetAssemblyTypeName: LoginPageController, Assembly-CSharp
+        m_MethodName: LoginProfile
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -838,7 +838,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 301946777}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
@@ -964,7 +964,7 @@ MonoBehaviour:
   password_Reg_IF: {fileID: 1111866169}
   login_Log_IF: {fileID: 1402484943}
   password_Log_IF: {fileID: 1140057994}
-  ChangePage_Button: {fileID: 0}
+  ChangePage_Button: {fileID: 2113108986}
   NotificationPref: {fileID: 0}
 --- !u!4 &331399187
 Transform:
@@ -1300,8 +1300,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1476040784}
-        m_TargetAssemblyTypeName: Client_INSPECTOR, Assembly-CSharp
+      - m_Target: {fileID: 331399186}
+        m_TargetAssemblyTypeName: LoginPageController, Assembly-CSharp
         m_MethodName: CreateNewProfile
         m_Mode: 1
         m_Arguments:
@@ -3393,7 +3393,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "***\u200B"
+  m_text: "\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

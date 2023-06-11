@@ -14,8 +14,8 @@ namespace BunkerGame.ClassLobby
     [System.Serializable]
     public class Lobby
     {
-        public string? IndexLobby;
-        //public List<InfoAboutPlayer> AllHero = new List<InfoAboutPlayer>();
+        public string? Index;
+        public List<InfoAboutPlayer> AllHero = new List<InfoAboutPlayer>();
         public bool IsEnd;
     }
 }
