@@ -84,11 +84,11 @@ public class Client_INSPECTOR : MonoBehaviour
             FindObjectOfType<ProfileControll>().LoadingProfileData(ThisPlayer.UserInfo);
     }
     public void AddLobbyInList(string data) => FindObjectOfType<Lobby_INSPECTOR>().AddLobbyInList(data);
-    public void isSuccessfullCreateLobby(string data) 
-    {
-        FindObjectOfType<Lobby_INSPECTOR>().AllLobby.Add(JsonUtility.FromJson<Lobby>(data));
-        //Здесь что то еще будет
-    }
+    //public void isSuccessfullCreateLobby(string data) 
+    //{
+        //FindObjectOfType<Lobby_INSPECTOR>().AllLobby.Add(JsonUtility.FromJson<Lobby>(data));
+        //Переход на сцену игры
+    //}
     #endregion
 
 
@@ -102,7 +102,7 @@ public class Client_INSPECTOR : MonoBehaviour
         ThisPlayer = new Player();
         ThisPlayer.UserInfo = JsonUtility.FromJson<User>(data);
         isConnectToServer = true;
-        scenesControll.ChangeScene(2);
+        scenesControll.ChangeScene("ListLobbyScene");
     }
 
     

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3147396636808285660}
   - component: {fileID: 3147396636808285661}
   - component: {fileID: 3147396636808285662}
+  - component: {fileID: -4271694304694187314}
   m_Layer: 5
   m_Name: Lobby
   m_TagString: Untagged
@@ -121,7 +122,32 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3147396636808285661}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: -4271694304694187314}
+        m_TargetAssemblyTypeName: SelectLobby, Assembly-CSharp
+        m_MethodName: OnSelectLobby
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &-4271694304694187314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3147396636808285648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40d0e02601cbe964d93ea956d89fd32d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IndexThisLobby: 
 --- !u!1 &3147396637701641931
 GameObject:
   m_ObjectHideFlags: 0

@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class SelectLobby : MonoBehaviour
 {
-    public string Index;
+    [HideInInspector]public string IndexThisLobby;
     public void OnSelectLobby()
     {
-
+        FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby = IndexThisLobby;
+        //Подгрузка информации о лобби сбоку от списка
     }
 }
