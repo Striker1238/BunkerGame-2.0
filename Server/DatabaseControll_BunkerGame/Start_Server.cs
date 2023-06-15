@@ -224,7 +224,7 @@ namespace BunkerGame.Database
 
             return null;
         }
-        protected internal async Task<Lobby> FirstConnectLobby(string indexLobby, string data)
+        protected internal async Task<bool> FirstConnectLobby(string indexLobby, string data)
         {
             var filter = new BsonDocument { { "Index", indexLobby } };
 

@@ -50,6 +50,7 @@ namespace BunkerGame.ClassClient
             { 8,"Failed to get lobby list data!"},
             { 9,"New lobby successfully created!"},
             { 10,"Failed to create lobby!"},
+            { 11,"New player has been connected to lobby!"},
         };
 
         static Client_INSPECTOR _ThisClient;
@@ -160,6 +161,9 @@ namespace BunkerGame.ClassClient
                             data = await streamReader.ReadLineAsync();
                             _request = new Request { method = _ThisClient.AddLobbyInList, data = data };
                             queueMethods.Enqueue(_request);
+                            break;
+                        case 11:
+
                             break;
                         default:
                             break;
