@@ -50,7 +50,9 @@ namespace BunkerGame.ClassClient
             { 8,"Failed to get lobby list data!"},
             { 9,"New lobby successfully created!"},
             { 10,"Failed to create lobby!"},
-            { 11,"New player has been connected to lobby!"},
+            { 11,"Successfully connect to lobby!"},
+            { 12,"Error on connect to lobby!"},
+            { 13,"New player has been connected to lobby!"},
         };
 
         static Client_INSPECTOR _ThisClient;
@@ -112,8 +114,11 @@ namespace BunkerGame.ClassClient
 
             if (Object.Length > 0)
             {
-                message = JsonUtility.ToJson(Object[0]);
-                await streamWriter.WriteLineAsync(message);
+                foreach (var item in Object)
+                {
+                    message = (typeof(T) != typeof(string)) ? JsonUtility.ToJson(item) : item.ToString();
+                    await streamWriter.WriteLineAsync(message);
+                }
             }
             await streamWriter.FlushAsync();
             
@@ -142,7 +147,7 @@ namespace BunkerGame.ClassClient
                             break;
                         case 5:
                             //Получаем информацию об успешном обновлении данных (пока что только аватар) 
-                            _request = new Request { method = _ThisClient.isSuccessfullChangeAvatar, data = "" }; //Посмотреть где у меня беруться данные, оттуда и будем забирать
+                            _request = new Request { method = _ThisClient.isChangeAvatar, data = "" }; //Посмотреть где у меня беруться данные, оттуда и будем забирать
                             queueMethods.Enqueue(_request);
                             break;
                         case 7:
@@ -159,11 +164,24 @@ namespace BunkerGame.ClassClient
                         case 9:
                             //Получаем успешность создания лобби, если успешно создано то запускаем у пользователя открытия лобби
                             data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.AddLobbyInList, data = data };
+                            _request = new Request { method = _ThisClient.isCreatedNewLobby, data = data };
+                            queueMethods.Enqueue(_request);
+
+                            break;
+
+
+                        //возможно объеденить методы 11 и 13
+                        case 11:
+                            data = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.ThisPlayerConnectToLobby, data = data };
                             queueMethods.Enqueue(_request);
                             break;
-                        case 11:
-
+                        case 13: ///<- данный метод может сработать только тогда, когда игрок находится в каком то лобби
+                            //Сервер сообщает что подключился новый пользователь к лобби
+                            data = await streamReader.ReadLineAsync();
+                            
+                            _request = new Request { method = _ThisClient.ConnectNewPlayerToLobby, data = "" };
+                            queueMethods.Enqueue(_request);
                             break;
                         default:
                             break;
@@ -178,6 +196,5 @@ namespace BunkerGame.ClassClient
             }
             return;
         }
-
     }
 }

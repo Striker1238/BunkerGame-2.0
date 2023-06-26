@@ -19,8 +19,8 @@ public class Lobby_INSPECTOR : MonoBehaviour
     public TMP_InputField PasswordLobby_IF;
 
 
-     public List<Lobby> AllLobby = new List<Lobby>();//[HideInInspector]
-    [HideInInspector] public string IndexSelectLobby = "";
+    public List<Lobby> AllLobby = new List<Lobby>();//[HideInInspector]
+    public string IndexSelectLobby = "";
 
     public void Start()
     {
@@ -62,6 +62,9 @@ public class Lobby_INSPECTOR : MonoBehaviour
         LobbyObject.GetComponent<SelectLobby>().IndexThisLobby = lobby.Index;
     }
 
+    /// <summary>
+    /// Запрос на создание лобби
+    /// </summary>
     public void CreateLobbyOnServer()
     {
         SettingsLobby setting = new SettingsLobby()
@@ -76,20 +79,23 @@ public class Lobby_INSPECTOR : MonoBehaviour
         FindObjectOfType<Client_INSPECTOR>().CreateLobby(newLobby);
     }
 
+    /// <summary>
+    /// Изменение приватности лобби
+    /// </summary>
     public void OnChangeAccess() => PasswordLobby_IF.gameObject.SetActive(AccessLobby_Toggle.isOn);
+    /// <summary>
+    /// Подключаемся к выбранному лобби
+    /// </summary>
+    public void StartConnectToLobby() => FindObjectOfType<Client_INSPECTOR>().ConnectToLobby(IndexSelectLobby);
 
-    public void StartConnectToLobby()
-    {
-        
-    }
-
-    public void NewConnectToLobby(User connectUser, string indexLobby)
+    
+    public void OnNewConnectToLobby(User connectUser)
     {
         InfoAboutPlayer newPlayerInLobby = new InfoAboutPlayer()
         {
             user = connectUser,
             hero = new Hero()
         };
-        AllLobby.Find(x => x.Index == indexLobby).AllHero.Add(newPlayerInLobby);    
+        AllLobby.Find(x => x.Index == IndexSelectLobby).AllHero.Add(newPlayerInLobby);    
     }
 }
