@@ -18,6 +18,8 @@ using BunkerGame.ClassLobby;
 using SharpCompress.Writers;
 using BunkerGame.Database;
 using static System.Net.WebRequestMethods;
+using System.Collections;
+using System.Net.Http;
 //using BunkerGame.ClassLobby;
 
 namespace BunkerGame.Database
@@ -98,6 +100,31 @@ namespace BunkerGame.Database
 
             server.Stop();
         }
+
+        /// <summary>
+        /// Вызываем когда к лобби, в котором есть данный игрок, подключается новый игрок
+        /// </summary>
+        /// <returns></returns>
+        
+        protected internal async Task SendMessageAsync<T>(ClientObject client, int index, params T[] Object)
+        {
+            string? message = null;
+
+            await client.streamWriter.WriteLineAsync(index.ToString());
+
+            if (Object.Length > 0)
+            {
+
+                foreach (var item in Object)
+                {
+                    message = (typeof(T) != typeof(string)) ? JsonSerializer.Serialize(item) : item.ToString();
+                    await client.streamWriter.WriteLineAsync(message);
+                }
+            }
+            await client.streamWriter.FlushAsync();
+        }
+
+
         protected internal async Task<bool> CreateNewProfile(string message)
         {
             User? newUser = JsonSerializer.Deserialize<User>(message);
@@ -163,40 +190,17 @@ namespace BunkerGame.Database
 
         protected internal async Task<List<Lobby>> GetListActiveLobby()
         {
-            var listLobby = AllActiveLobby.FindAll(x => x.IsEnd == false && x.IsStart == false);
+            var listLobby = new List<Lobby>(AllActiveLobby.FindAll(x => x.IsEnd == false && x.IsStart == false));
+            //foreach (var lobby in listLobby)
+               // lobby.Settings.Password = "";
             return listLobby;
-            //if (listLobby.Count > 0) 
-            //    return listLobby;
-            //else return null;
-            /*
-            var filter = new BsonDocument("$and",
-                new BsonArray{
-                    new BsonDocument("IsEnd", false),
-                    new BsonDocument("IsStart", false)
-                });
-            if (DatabaseControll.IsDocumentExistsAsync<Lobby>("Lobby", filter).Result)
-                return await DatabaseControll.GetListDocumentsAsync<Lobby>("Lobby");
-            else return new List<Lobby>();
-            */
+
         }
         protected internal async Task<Lobby> GetDataAboutLobby(string indexLobby)
         {
-            var lobby = AllActiveLobby.Find(x => x.Index == indexLobby);
+            var lobby = new Lobby(AllActiveLobby.Find(x => x.Index == indexLobby));
+            //lobby.Settings.Password = "";
             return lobby;
-            //if (lobby is not null)
-            //    return lobby;
-            //else return null;
-
-            /*
-            var filter = new BsonDocument("Index", indexLobby);
-
-            if (DatabaseControll.IsDocumentExistsAsync<Lobby>("Lobby", filter).Result)
-            {
-                var lobby = await DatabaseControll.GetListDocumentsAsync<Lobby>("Lobby", filter);
-                return lobby[0];
-            }
-            else return null;
-            */
         }
         protected internal async Task<Lobby> CreateNewLobby(string message)
         {
@@ -234,7 +238,7 @@ namespace BunkerGame.Database
         }
         protected internal async Task<bool> SaveLobbyInDatabase(string indexLobby)
         {
-            Lobby? findLobby = AllActiveLobby.Find(x => x.Index == indexLobby);
+            Lobby? findLobby = new Lobby(AllActiveLobby.Find(x => x.Index == indexLobby));
             if (findLobby == null) return false;
 
 
@@ -256,30 +260,34 @@ namespace BunkerGame.Database
 
             return true;
         }
-        protected internal async Task<bool> FirstConnectLobby(string indexLobby, string userLogin)
+        protected internal async Task<bool> FirstConnectLobby(string indexLobby, string userLogin, string passwordLobby , ClientObject newClientObj)
         {
             var filterLobby = new BsonDocument { { "Index", indexLobby } };
             var filterUser = new BsonDocument { { "Login", userLogin } };
             if (indexLobby != null && userLogin != null 
                 && DatabaseControll.IsDocumentExistsAsync<User>("Users", filterUser).Result)
             {
+
+                Lobby? findLobby = new Lobby(AllActiveLobby.Find(x => x.Index == indexLobby));
                 var newUser = GetDataAboutUser(userLogin).Result;
-                if (newUser is null) return false;
+
+                if (newUser is null || findLobby.Settings.Password != passwordLobby) return false;
+
 
                 InfoAboutPlayer? newPlayerInLobby = new InfoAboutPlayer()
                 {
                     user = newUser,
-                    hero = new Hero()
+                    hero = new Hero(),
+                    client = newClientObj
                 };
 
-                Lobby? findLobby = AllActiveLobby.Find(x => x.Index == indexLobby);
                 //Добавляем текущего игрока к списку
                 findLobby.AllHero.Add(newPlayerInLobby);
-                //У всех, кто подключен к выбранному лоби, вызываем подключение нового игрока
+                //У всех, кто подключен к выбранному лобби, вызываем подключение нового игрока
                 foreach (var hero in findLobby.AllHero)
                 {
                     if (hero == newPlayerInLobby || hero.client is null) continue;
-                    hero.client.OnNewConnectToLobby(newUser);
+                    await hero.client.OnNewConnectToLobby(newUser);
                 }
                 return true;
             }
@@ -333,7 +341,7 @@ namespace BunkerGame.Database
                     if (CommandForServer == "DISCONNECT") break;
 
 
-                    string? message, data;
+                    string? message, data, passwordLobby;
                     switch (CommandForServer)
                     {
                         //Создание нового пользователя
@@ -344,9 +352,9 @@ namespace BunkerGame.Database
                             var isSuccessfull_Creating = await server.CreateNewProfile(message);
 
                             if (isSuccessfull_Creating)
-                                await streamWriter.WriteLineAsync("1");
+                                await server.SendMessageAsync<string>(this,1);
                             else
-                                await streamWriter.WriteLineAsync("2");
+                                await server.SendMessageAsync<string>(this,2);
                             break;
 
                         //Вход в аккаунт
@@ -359,11 +367,10 @@ namespace BunkerGame.Database
                             if (isSuccessfull_Login != null)
                             {
                                 isSuccessfull_Login.Password = "";
-                                await streamWriter.WriteLineAsync("3");
-                                await streamWriter.WriteLineAsync(JsonSerializer.Serialize(isSuccessfull_Login));
+                                await server.SendMessageAsync(this, 3, isSuccessfull_Login);
                             }
                             else
-                                await streamWriter.WriteLineAsync("4");
+                                await server.SendMessageAsync<string>(this, 4);
                             break;
 
                         //Смена аватара
@@ -374,9 +381,9 @@ namespace BunkerGame.Database
                             var isSuccessfull_ChangeData = await server.ChangeDataInProfile(message);
 
                             if (isSuccessfull_ChangeData)
-                                await streamWriter.WriteLineAsync("5");
+                                await server.SendMessageAsync<string>(this, 5);
                             else
-                                await streamWriter.WriteLineAsync("6");
+                                await server.SendMessageAsync<string>(this, 6);
                             break;
 
                         //Получение списка всех активных лобби
@@ -392,24 +399,25 @@ namespace BunkerGame.Database
                                 {
                                     await streamWriter.WriteLineAsync(JsonSerializer.Serialize(lobby));
                                 }
+                                //await server.SendMessageAsync<Lobby>(this, 7, allActiveLobby.ToArray());
                             }
                             else
-                                await streamWriter.WriteLineAsync("8");
+                                await server.SendMessageAsync<string>(this, 8);
+
+                            await streamWriter.FlushAsync();
                             break;
 
                         //Создание нового лобби
                         case "CREATE_LOBBY":
                             Console.WriteLine($"{ip} - Send a request on create new lobby");
                             message = await streamReader.ReadLineAsync();
-                            var createLobby = await server.CreateNewLobby(message);
+                            var createLobby = new Lobby(await server.CreateNewLobby(message));
 
                             if (createLobby != null)
-                            {
-                                await streamWriter.WriteLineAsync("9");
-                                await streamWriter.WriteLineAsync(JsonSerializer.Serialize(createLobby));
-                            }
+                                await server.SendMessageAsync(this, 9, createLobby);
+                                //createLobby.Settings.Password = "";
                             else
-                                await streamWriter.WriteLineAsync("10");
+                                await server.SendMessageAsync<string>(this, 10);
                             break;
 
                         //Подключение к существующему лобби
@@ -419,16 +427,21 @@ namespace BunkerGame.Database
                             message = await streamReader.ReadLineAsync();
                             //Здесь получаем логин пользователя, которого подключаем
                             data = await streamReader.ReadLineAsync();
+                            //Здесь получаем пароль, который ввел пользователь, для подключения к лобби
+                            passwordLobby = await streamReader.ReadLineAsync();
 
-                            if (await server.FirstConnectLobby(message, data))
+                            Console.WriteLine(passwordLobby);
+                            if (await server.FirstConnectLobby(message, data, passwordLobby, this))
                             {
-                                await streamWriter.WriteLineAsync("11");
+                                //await streamWriter.WriteLineAsync("11");
 
-                                await streamWriter.WriteLineAsync(JsonSerializer.Serialize(server.AllActiveLobby.Find(x => x.Index == message)));
-                                //await streamWriter.WriteLineAsync(JsonSerializer.Serialize(server.GetDataAboutUser(data).Result));
+                                var lobby = new Lobby(server.AllActiveLobby.Find(x => x.Index == message));
+                                //lobby.Settings.Password = "";
+                                await server.SendMessageAsync(this, 11, lobby);
+                                //await streamWriter.WriteLineAsync(JsonSerializer.Serialize(lobby));
                             }
                             else
-                                await streamWriter.WriteLineAsync("12");
+                                await server.SendMessageAsync<string>(this, 12);
 
                             break;
 
@@ -436,11 +449,9 @@ namespace BunkerGame.Database
                         default:
                             message = await streamReader.ReadLineAsync();
                             Console.WriteLine($"{ip} - Send a unknow request");
-
-                            await streamWriter.WriteLineAsync("-1");
+                            await server.SendMessageAsync<string>(this, -1);
                             break;
                     }
-                    await streamWriter.FlushAsync();
                 }
             }
             catch (Exception e)
@@ -458,17 +469,12 @@ namespace BunkerGame.Database
             }
             
         }
-
-        /// <summary>
-        /// Вызываем когда к лобби, в котором есть данный игрок, подключается новый игрок
-        /// </summary>
-        /// <returns></returns>
-        protected internal async Task OnNewConnectToLobby(User message)
-        {
-            await streamWriter.WriteLineAsync("13");
-            await streamWriter.WriteLineAsync(JsonSerializer.Serialize(message));
-        }
-
+        protected internal async Task OnNewConnectToLobby(User message) => await server.SendMessageAsync(this, 13, message);
+        //{
+            
+            //await streamWriter.WriteLineAsync("13");
+            //await streamWriter.WriteLineAsync(JsonSerializer.Serialize(message));
+        //}
 
         /// <summary>
         /// Отключение подключения и закрытие клиента на сервере
@@ -569,7 +575,18 @@ public class Lobby
     public bool IsEnd { get; set; }
     public string? StartTime { get; set; }
     public string? EndTime { get; set; }
-
+    public Lobby(){}
+    public Lobby(Lobby? oldLobby)
+    {
+        this.Id = oldLobby.Id;
+        this.Index = oldLobby.Index;
+        this.AllHero = oldLobby.AllHero;
+        this.Settings = oldLobby.Settings;
+        this.IsStart = oldLobby.IsStart;
+        this.IsEnd = oldLobby.IsEnd;
+        this.StartTime = oldLobby.StartTime;
+        this.EndTime = oldLobby.EndTime;
+    }
     /// <summary>
     /// Генерирует строку
     /// </summary>

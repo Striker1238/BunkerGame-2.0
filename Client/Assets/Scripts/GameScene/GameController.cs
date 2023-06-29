@@ -1,5 +1,6 @@
 using BunkerGame.ClassHero;
 using BunkerGame.ClassLobby;
+using BunkerGame.ClassPlayer;
 using BunkerGame.ClassUser;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +8,14 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
+    [System.Serializable]
+    public struct PlayerPosition
+    {
+        public byte CountPlayers;
+        public Vector3[] AllPosForPlayer;
+    }
+
+    public PlayerPosition[] AllPosition;
     static CreatingNewPlayerObject creatingPlayer;
     public Lobby thisLobby;
     
@@ -14,9 +23,10 @@ public class GameController : MonoBehaviour
     {
         thisLobby = FindObjectOfType<Client_INSPECTOR>().ThisPlayer.ActiveLobby;
         creatingPlayer = GetComponent<CreatingNewPlayerObject>();
-        foreach (var player in thisLobby.AllHero)
+        for (int i = 0; i < thisLobby.AllHero.Count; i++)
         {
-            creatingPlayer.CreatePlayerObject(player.user);
+            var player = thisLobby.AllHero[i];
+            creatingPlayer.CreatePlayerObject(player.user, thisLobby.Settings.MaxPlayers, (byte)i);
         }
         
     }
@@ -32,5 +42,6 @@ public class GameController : MonoBehaviour
             hero = new Hero()
         };
         thisLobby.AllHero.Add(newPlayerInLobby);
+        creatingPlayer.CreatePlayerObject(connectUser, thisLobby.Settings.MaxPlayers, (byte)(thisLobby.AllHero.Count-1));
     }
 }

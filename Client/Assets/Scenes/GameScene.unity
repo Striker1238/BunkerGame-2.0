@@ -252,6 +252,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7975e11ea335cbf4ab16e15b0436a92f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  AllPosition:
+  - CountPlayers: 6
+    AllPosForPlayer:
+    - {x: -600, y: 350, z: 0}
+    - {x: 0, y: 350, z: 0}
+    - {x: 600, y: 350, z: 0}
+    - {x: 600, y: -350, z: 0}
+    - {x: 0, y: -350, z: 0}
+    - {x: -600, y: -350, z: 0}
+  - CountPlayers: 7
+    AllPosForPlayer:
+    - {x: -600, y: 350, z: 0}
+    - {x: -200, y: 350, z: 0}
+    - {x: 200, y: 350, z: 0}
+    - {x: 600, y: 350, z: 0}
+    - {x: 600, y: -350, z: 0}
+    - {x: 0, y: -350, z: 0}
+    - {x: -600, y: -350, z: 0}
+  - CountPlayers: 8
+    AllPosForPlayer:
+    - {x: -600, y: 350, z: 0}
+    - {x: -200, y: 350, z: 0}
+    - {x: 200, y: 350, z: 0}
+    - {x: 600, y: 350, z: 0}
+    - {x: 600, y: -350, z: 0}
+    - {x: 200, y: -350, z: 0}
+    - {x: -200, y: -350, z: 0}
+    - {x: -600, y: -350, z: 0}
+  - CountPlayers: 9
+    AllPosForPlayer:
+    - {x: -600, y: 350, z: 0}
+    - {x: -200, y: 350, z: 0}
+    - {x: 200, y: 350, z: 0}
+    - {x: 600, y: 350, z: 0}
+    - {x: 600, y: 0, z: 0}
+    - {x: 600, y: -350, z: 0}
+    - {x: 0, y: -350, z: 0}
+    - {x: -600, y: -350, z: 0}
+    - {x: -600, y: 0, z: 0}
+  - CountPlayers: 10
+    AllPosForPlayer:
+    - {x: -600, y: 350, z: 0}
+    - {x: -200, y: 350, z: 0}
+    - {x: 200, y: 350, z: 0}
+    - {x: 600, y: 350, z: 0}
+    - {x: 600, y: 0, z: 0}
+    - {x: 600, y: -350, z: 0}
+    - {x: -200, y: -350, z: 0}
+    - {x: 200, y: -350, z: 0}
+    - {x: -600, y: -350, z: 0}
+    - {x: -600, y: 0, z: 0}
   thisLobby:
     Index: 
     AllHero: []

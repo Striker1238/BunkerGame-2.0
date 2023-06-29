@@ -65,7 +65,7 @@ public class Client_INSPECTOR : MonoBehaviour
     public void ChangeAvatarProfile(User newData) => ThisClient.CreateMessageForServer(3, newData);
     public void GetListLobby() => ThisClient.CreateMessageForServer<Lobby>(4);
     public void CreateLobby(Lobby newLobby) => ThisClient.CreateMessageForServer(5, newLobby);
-    public void ConnectToLobby(string indexLobby) => ThisClient.CreateMessageForServer(6, indexLobby, ThisPlayer.UserInfo.Login);
+    public void ConnectToLobby(string indexLobby, string passwordLobby) => ThisClient.CreateMessageForServer(6, indexLobby, ThisPlayer.UserInfo.Login, passwordLobby);
     #endregion
 
 
@@ -80,10 +80,9 @@ public class Client_INSPECTOR : MonoBehaviour
     }
     public void isCreatedNewLobby(string data)
     {
-        FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby = JsonUtility.FromJson<Lobby>(data).Index; //FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby;
-        AddLobbyInList(data);
+        FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby = JsonUtility.FromJson<Lobby>(data).Index;
 
-        ConnectToLobby(FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby);
+        ConnectToLobby(FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby, FindObjectOfType<Lobby_INSPECTOR>().PasswordLobby_IF.text);
     }
     public void AddLobbyInList(string data) => FindObjectOfType<Lobby_INSPECTOR>().AddLobbyInList(data);
     /// <summary>
@@ -92,7 +91,6 @@ public class Client_INSPECTOR : MonoBehaviour
     /// <param name="data"></param>
     public void ThisPlayerConnectToLobby(string data)
     {
-        //FindObjectOfType<Lobby_INSPECTOR>().OnNewConnectToLobby(ThisPlayer.UserInfo);
         ThisPlayer.ActiveLobby = JsonUtility.FromJson<Lobby>(data);
         //Μενÿεμ ρφενσ
         FindObjectOfType<ScenesControll>().ChangeScene(3);
@@ -100,6 +98,7 @@ public class Client_INSPECTOR : MonoBehaviour
     public void ConnectNewPlayerToLobby(string data)
     {
         var newUser = JsonUtility.FromJson<User>(data);
+        Debug.Log("Aboba2");
         FindObjectOfType<GameController>().OnNewConnectToLobby(newUser);
     }
     #endregion

@@ -5,9 +5,5 @@ using UnityEngine;
 public class SelectLobby : MonoBehaviour
 {
     [HideInInspector]public string IndexThisLobby;
-    public void OnSelectLobby()
-    {
-        FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby = IndexThisLobby;
-        //Подгрузка информации о лобби сбоку от списка
-    }
+    public void OnSelectLobby() => FindObjectOfType<Lobby_INSPECTOR>().SelectLobbyForConnect(IndexThisLobby);
 }

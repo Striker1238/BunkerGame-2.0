@@ -132,7 +132,7 @@ namespace BunkerGame.ClassClient
                     string? message = await streamReader.ReadLineAsync();
                     string? data = null;
                     Request _request = new Request();
-
+                    Debug.Log("Server send message");
                     
                     switch (Convert.ToInt32(message))
                     {
@@ -179,8 +179,8 @@ namespace BunkerGame.ClassClient
                         case 13: ///<- данный метод может сработать только тогда, когда игрок находитс€ в каком то лобби
                             //—ервер сообщает что подключилс€ новый пользователь к лобби
                             data = await streamReader.ReadLineAsync();
-                            
-                            _request = new Request { method = _ThisClient.ConnectNewPlayerToLobby, data = "" };
+                            Debug.Log("ABOBA");
+                            _request = new Request { method = _ThisClient.ConnectNewPlayerToLobby, data = data };
                             queueMethods.Enqueue(_request);
                             break;
                         default:

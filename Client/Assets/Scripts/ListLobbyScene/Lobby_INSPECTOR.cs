@@ -18,9 +18,17 @@ public class Lobby_INSPECTOR : MonoBehaviour
     public Toggle AccessLobby_Toggle;
     public TMP_InputField PasswordLobby_IF;
 
+    [Header("Lobby information")]
+    public TMP_InputField PasswordLobbyForConnect_IF;
+    public TextMeshProUGUI PlayersInfo_TMP;
+    public TextMeshProUGUI AccessLobbyInfo_TMP;
+    public TextMeshProUGUI LobbyNameInfo_TMP;
+    public GameObject PlayerPrefInfo;
+    public GameObject PlayerPerentInfo;
 
-    public List<Lobby> AllLobby = new List<Lobby>();//[HideInInspector]
-    public string IndexSelectLobby = "";
+
+    [HideInInspector] public List<Lobby> AllLobby = new List<Lobby>();
+    [HideInInspector] public string IndexSelectLobby = "";
 
     public void Start()
     {
@@ -28,14 +36,16 @@ public class Lobby_INSPECTOR : MonoBehaviour
     }
 
 
-
-
     /// <summary>
     /// Запрос данных о всех лобби
     /// </summary>
     public void GetRequestListLobby()
     {
+        foreach (var lobbyObject in LobbyPerent.GetComponentsInChildren<SelectLobby>())
+            Destroy(lobbyObject.gameObject);
         AllLobby.Clear();
+
+
         FindObjectOfType<Client_INSPECTOR>().GetListLobby();
     }
 
@@ -72,7 +82,7 @@ public class Lobby_INSPECTOR : MonoBehaviour
             Name = NameLobby_IF.text,
             MaxPlayers = (byte)MaxPlayers_Slider.value,
             isPrivate = AccessLobby_Toggle.isOn,
-            Password = (AccessLobby_Toggle.isOn)? PasswordLobby_IF.text : null,
+            Password = (AccessLobby_Toggle.isOn)? PasswordLobby_IF.text : "",
         };
         var newLobby = new Lobby() { Settings = setting, IsStart = false, IsEnd = false };
 
@@ -86,16 +96,28 @@ public class Lobby_INSPECTOR : MonoBehaviour
     /// <summary>
     /// Подключаемся к выбранному лобби
     /// </summary>
-    public void StartConnectToLobby() => FindObjectOfType<Client_INSPECTOR>().ConnectToLobby(IndexSelectLobby);
+    public void StartConnectToLobby() => FindObjectOfType<Client_INSPECTOR>().ConnectToLobby(IndexSelectLobby, PasswordLobbyForConnect_IF.text);
 
-    
-    public void OnNewConnectToLobby(User connectUser)
+    public void SelectLobbyForConnect(string index)
     {
-        InfoAboutPlayer newPlayerInLobby = new InfoAboutPlayer()
+        IndexSelectLobby = index;
+
+        var selectLobby = AllLobby.Find(x => x.Index == index);
+        LobbyNameInfo_TMP.text = selectLobby.Settings.Name;
+        AccessLobbyInfo_TMP.text = selectLobby.Settings.isPrivate ? "Private" : "Public";
+        PasswordLobbyForConnect_IF.gameObject.SetActive(selectLobby.Settings.isPrivate);
+        PlayersInfo_TMP.text = $"Players: {selectLobby.AllHero.Count}/{selectLobby.Settings.MaxPlayers}";
+
+
+
+        foreach (var playerObject in PlayerPerentInfo.GetComponentsInChildren<Button>())
+            if(playerObject.tag == "Player") Destroy(playerObject.gameObject);
+
+
+        foreach (var player in selectLobby.AllHero)
         {
-            user = connectUser,
-            hero = new Hero()
-        };
-        AllLobby.Find(x => x.Index == IndexSelectLobby).AllHero.Add(newPlayerInLobby);    
+            var playerObject  = Instantiate(PlayerPrefInfo,  PlayerPerentInfo.transform);
+            playerObject.GetComponentInChildren<TextMeshProUGUI>().text = player.user.UserName;
+        }
     }
 }
