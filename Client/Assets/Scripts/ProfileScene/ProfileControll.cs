@@ -24,7 +24,7 @@ public class ProfileControll : MonoBehaviour
 
     public void Start()
     {
-        LoadingProfileData(FindObjectOfType<Client_INSPECTOR>().ThisPlayer.UserInfo);
+        LoadingProfileData(FindObjectOfType<Client_To_Scripts_Bridge>().ThisPlayer.UserInfo);
     }
 
     public void LoadingProfileData(User _User)
@@ -48,12 +48,12 @@ public class ProfileControll : MonoBehaviour
     /// </summary>
     public void ChangeAvatar()
     {
-        var thisUser = FindObjectOfType<Client_INSPECTOR>().ThisPlayer.UserInfo;
+        var thisUser = FindObjectOfType<Client_To_Scripts_Bridge>().ThisPlayer.UserInfo;
 
         //Меняем аватар
         thisUser.AvatarBase64 = Convert.ToBase64String(File.ReadAllBytes(GetPathOnFile()));
 
-        FindObjectOfType<Client_INSPECTOR>().ChangeAvatarProfile(thisUser);
+        FindObjectOfType<Client_To_Scripts_Bridge>().ChangeAvatarProfile(thisUser);
     }
 
 

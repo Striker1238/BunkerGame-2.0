@@ -34,14 +34,14 @@ public class LoginPageController : MonoBehaviour
 
 
 
-    public void CreateNewProfile()=>FindObjectOfType<Client_INSPECTOR>().CreateNewProfile
+    public void CreateNewProfile()=>FindObjectOfType<Client_To_Scripts_Bridge>().CreateNewProfile
         (new User{
             UserName = username_IF.text,
             Login = login_Reg_IF.text,
             Password = password_Reg_IF.text,
             AvatarBase64 = null,
         });
-    public void LoginProfile()=>FindObjectOfType<Client_INSPECTOR>().LoginInProfile
+    public void LoginProfile()=>FindObjectOfType<Client_To_Scripts_Bridge>().LoginInProfile
         (new User{
             Login = login_Log_IF.text,
             Password = password_Log_IF.text
@@ -75,5 +75,9 @@ public class LoginPageController : MonoBehaviour
         notification.GetComponent<Notification>().NotificationFromServer(new Vector3(0,0,0));
     }
 
+    public void ExitGame()
+    {
+        Application.Quit();
+    }
     
 }

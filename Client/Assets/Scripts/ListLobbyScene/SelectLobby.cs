@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class SelectLobby : MonoBehaviour
 {
-    public string Index;
-    public void OnSelectLobby()
-    {
-
-    }
+    [HideInInspector]public string IndexThisLobby;
+    public void OnSelectLobby() => FindObjectOfType<Lobby_INSPECTOR>().SelectLobbyForConnect(IndexThisLobby);
 }
