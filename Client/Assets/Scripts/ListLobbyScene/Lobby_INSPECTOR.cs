@@ -46,7 +46,7 @@ public class Lobby_INSPECTOR : MonoBehaviour
         AllLobby.Clear();
 
 
-        FindObjectOfType<Client_INSPECTOR>().GetListLobby();
+        FindObjectOfType<Client_To_Scripts_Bridge>().GetListLobby();
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public class Lobby_INSPECTOR : MonoBehaviour
         };
         var newLobby = new Lobby() { Settings = setting, IsStart = false, IsEnd = false };
 
-        FindObjectOfType<Client_INSPECTOR>().CreateLobby(newLobby);
+        FindObjectOfType<Client_To_Scripts_Bridge>().CreateLobby(newLobby);
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public class Lobby_INSPECTOR : MonoBehaviour
     /// <summary>
     /// Подключаемся к выбранному лобби
     /// </summary>
-    public void StartConnectToLobby() => FindObjectOfType<Client_INSPECTOR>().ConnectToLobby(IndexSelectLobby, PasswordLobbyForConnect_IF.text);
+    public void StartConnectToLobby() => FindObjectOfType<Client_To_Scripts_Bridge>().ConnectToLobby(IndexSelectLobby, PasswordLobbyForConnect_IF.text);
 
     public void SelectLobbyForConnect(string index)
     {

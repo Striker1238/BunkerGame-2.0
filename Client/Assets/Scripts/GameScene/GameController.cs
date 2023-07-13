@@ -21,7 +21,7 @@ public class GameController : MonoBehaviour
     
     void Start()
     {
-        thisLobby = FindObjectOfType<Client_INSPECTOR>().ThisPlayer.ActiveLobby;
+        thisLobby = FindObjectOfType<Client_To_Scripts_Bridge>().ThisPlayer.ActiveLobby;
         creatingPlayer = GetComponent<CreatingNewPlayerObject>();
         for (int i = 0; i < thisLobby.AllHero.Count; i++)
         {
@@ -44,4 +44,7 @@ public class GameController : MonoBehaviour
         thisLobby.AllHero.Add(newPlayerInLobby);
         creatingPlayer.CreatePlayerObject(connectUser, thisLobby.Settings.MaxPlayers, (byte)(thisLobby.AllHero.Count-1));
     }
+
+    public void isChangedReadiness(bool state) => FindObjectOfType<Client_To_Scripts_Bridge>().ChangeReadiness(thisLobby.Index, state);
+
 }

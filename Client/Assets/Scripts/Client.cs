@@ -18,6 +18,14 @@ namespace BunkerGame.ClassClient
         public RequestMethod method;
         public string data;
     }
+    /// <summary>
+    /// Client хранит адрес сервера, 
+    /// соединение, 
+    /// типы запросов/ответов
+    /// Самого клиента, 
+    /// очередь методов,
+    /// очередь сообщений
+    /// </summary>
     public class Client
     {
         public string ServerIp = "127.0.0.1";
@@ -30,38 +38,45 @@ namespace BunkerGame.ClassClient
         public Dictionary<uint, string> TypePOST { get; } = new Dictionary<uint, string>()
         {
             { 0,"DISCONNECT"},
-            { 1,"CREATE_PROFILE"},
-            { 2,"LOGIN_PROFILE"},
-            { 3,"CHANGE_DATA_PROFILE"},
-            { 4,"GET_LIST_ACTIVE_LOBBY"},
-            { 5,"CREATE_LOBBY"},
-            { 6,"CONNECT_LOBBY"},
+            { 10,"CREATE_PROFILE"},
+            { 11,"LOGIN_PROFILE"},
+            { 12,"CHANGE_DATA_PROFILE"},
+            { 20,"GET_LIST_ACTIVE_LOBBY"},
+            { 21,"CREATE_LOBBY"},
+            { 22,"CONNECT_LOBBY"},
+            { 23,"DISCONNECT_LOBBY"},
+            { 30,"CHANGE_READINESS"},
         };
         public Dictionary<int, string> TypeGET { get; } = new Dictionary<int, string>()
         {
             { -1,"Incorrect request"},
-            { 1,"Account created successfully!"},
-            { 2,"An account with this login already exists!"},
-            { 3,"Account information is correct!"},
-            { 4,"Account information is not correct!"},
-            { 5,"Profile has been update!"},
-            { 6,"Profile not update, please try again!"},
-            { 7,"Received a list from the lobby!"},
-            { 8,"Failed to get lobby list data!"},
-            { 9,"New lobby successfully created!"},
-            { 10,"Failed to create lobby!"},
-            { 11,"Successfully connect to lobby!"},
-            { 12,"Error on connect to lobby!"},
-            { 13,"New player has been connected to lobby!"},
+            { 10,"Account created successfully!"},
+            { 11,"An account with this login already exists!"},
+            { 12,"Account information is correct!"},
+            { 13,"Account information is not correct!"},
+            { 14,"Profile has been update!"},
+            { 15,"Profile not update, please try again!"},
+
+            { 20,"Received a list from the lobby!"},
+            { 21,"Failed to get lobby list data!"},
+            { 22,"New lobby successfully created!"},
+            { 23,"Failed to create lobby!"},
+            { 24,"Successfully connect to lobby!"},
+            { 25,"Error on connect to lobby!"},
+            { 26,"New player has been connected to lobby!"},
+
+            { 50,"State has been changed"},
+            { 51,"Error"},
+            { 100,"Start game"},
         };
 
-        static Client_INSPECTOR _ThisClient;
+        static Client_To_Scripts_Bridge _ThisClient;
         TcpClient tcpClient;
 
 
         public Queue<Request> queueMethods = new Queue<Request>();
 
-        public async void Start(Client_INSPECTOR client_INSPECTOR)
+        public async void Start(Client_To_Scripts_Bridge client_INSPECTOR)
         {
             _ThisClient = client_INSPECTOR;
 
@@ -136,21 +151,21 @@ namespace BunkerGame.ClassClient
                     
                     switch (Convert.ToInt32(message))
                     {
-                        case 1:
+                        case 10:
                             //Пока пусто, тк тут результат регистрации
                             break;
-                        case 3:
+                        case 12:
                             //Получаем информацию о корректных данных пользователя которым логинимся
                             data = await streamReader.ReadLineAsync();
                             _request = new Request { method = _ThisClient.isCorrectData, data = data };
                             queueMethods.Enqueue(_request);
                             break;
-                        case 5:
+                        case 14:
                             //Получаем информацию об успешном обновлении данных (пока что только аватар) 
                             _request = new Request { method = _ThisClient.isChangeAvatar, data = "" }; //Посмотреть где у меня беруться данные, оттуда и будем забирать
                             queueMethods.Enqueue(_request);
                             break;
-                        case 7:
+                        case 20:
                             //Получаем количество активных лобби
                             var countActiveLobby = await streamReader.ReadLineAsync();
                             //Начинаем получать информацию о каждом активном лобби
@@ -161,7 +176,7 @@ namespace BunkerGame.ClassClient
                                 queueMethods.Enqueue(_request);
                             }
                             break;
-                        case 9:
+                        case 22:
                             //Получаем успешность создания лобби, если успешно создано то запускаем у пользователя открытия лобби
                             data = await streamReader.ReadLineAsync();
                             _request = new Request { method = _ThisClient.isCreatedNewLobby, data = data };
@@ -171,16 +186,22 @@ namespace BunkerGame.ClassClient
 
 
                         //возможно объеденить методы 11 и 13
-                        case 11:
+                        case 24:
                             data = await streamReader.ReadLineAsync();
                             _request = new Request { method = _ThisClient.ThisPlayerConnectToLobby, data = data };
                             queueMethods.Enqueue(_request);
                             break;
-                        case 13: ///<- данный метод может сработать только тогда, когда игрок находится в каком то лобби
+                        case 26: ///<- данный метод может сработать только тогда, когда игрок находится в каком то лобби
                             //Сервер сообщает что подключился новый пользователь к лобби
                             data = await streamReader.ReadLineAsync();
-                            Debug.Log("ABOBA");
                             _request = new Request { method = _ThisClient.ConnectNewPlayerToLobby, data = data };
+                            queueMethods.Enqueue(_request);
+                            break;
+
+
+                        case 100:
+                            data = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.StartGame, data = data };
                             queueMethods.Enqueue(_request);
                             break;
                         default:

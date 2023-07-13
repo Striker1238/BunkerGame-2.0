@@ -11,15 +11,16 @@ using BunkerGame.ClassClient;
 using BunkerGame.ClassPlayer;
 using BunkerGame.ClassUser;
 using BunkerGame.ClassLobby;
-
-
+using BunkerGame.ClassHero;
 
 /// <summary>
-/// Не хранить данны о лобби и игроке
-/// Только содержать ссылки на объекты с такими данными 
-/// Обращаться к серверу с запросами и получать ответы от сервера с помощью скрипта Client
+/// Объект клиента хранит информацию о подключении информации,
+/// объект игрока,
+/// объект контроллера сцен
+/// объект Client
+/// Этот скрипт является мостом между объектом Client и другими скриптами проекта
 /// </summary>
-public class Client_INSPECTOR : MonoBehaviour
+public class Client_To_Scripts_Bridge : MonoBehaviour
 {
     [Header("Client stats")]
     public bool isConnectToServer;
@@ -60,12 +61,16 @@ public class Client_INSPECTOR : MonoBehaviour
 
 
     #region POST
-    public void CreateNewProfile(User newUser) => ThisClient.CreateMessageForServer(1,newUser);
-    public void LoginInProfile(User user) => ThisClient.CreateMessageForServer(2, user);
-    public void ChangeAvatarProfile(User newData) => ThisClient.CreateMessageForServer(3, newData);
-    public void GetListLobby() => ThisClient.CreateMessageForServer<Lobby>(4);
-    public void CreateLobby(Lobby newLobby) => ThisClient.CreateMessageForServer(5, newLobby);
-    public void ConnectToLobby(string indexLobby, string passwordLobby) => ThisClient.CreateMessageForServer(6, indexLobby, ThisPlayer.UserInfo.Login, passwordLobby);
+    public void CreateNewProfile(User newUser) => ThisClient.CreateMessageForServer(10,newUser);
+    public void LoginInProfile(User user) => ThisClient.CreateMessageForServer(11, user);
+    public void ChangeAvatarProfile(User newData) => ThisClient.CreateMessageForServer(12, newData);
+    public void GetListLobby() => ThisClient.CreateMessageForServer<Lobby>(20);
+    public void CreateLobby(Lobby newLobby) => ThisClient.CreateMessageForServer(21, newLobby);
+    public void ConnectToLobby(string indexLobby, string passwordLobby) => ThisClient.CreateMessageForServer(22, indexLobby, ThisPlayer.UserInfo.Login, passwordLobby);
+    public void ChangeReadiness(string indexLobby, bool state) => ThisClient.CreateMessageForServer(30, indexLobby, ThisPlayer.UserInfo.Login, state?"1":"0");
+
+
+    public void ClientDisconnect() => ThisClient.CreateMessageForServer<string>(0);
     #endregion
 
 
@@ -100,6 +105,13 @@ public class Client_INSPECTOR : MonoBehaviour
         var newUser = JsonUtility.FromJson<User>(data);
         Debug.Log("Aboba2");
         FindObjectOfType<GameController>().OnNewConnectToLobby(newUser);
+    }
+
+
+    public void StartGame(string data)
+    {
+        ThisPlayer.ActiveLobby.AllHero.Find(x => x.user.UserName == ThisPlayer.UserInfo.UserName).hero = JsonUtility.FromJson<Hero>(data);
+        Debug.Log("START GAME");
     }
     #endregion
 
