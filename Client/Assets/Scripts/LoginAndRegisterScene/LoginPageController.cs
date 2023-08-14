@@ -65,7 +65,7 @@ public class LoginPageController : MonoBehaviour
         password_Reg_IF.ActivateInputField();
         password_Log_IF.ActivateInputField();
     }
-
+    //test
     public void NewNotificationOnLoginPage(string? message)
     {
         var notification = Instantiate(NotificationPref);
