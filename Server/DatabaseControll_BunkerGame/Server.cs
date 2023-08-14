@@ -13,9 +13,11 @@ using System.Text.Json;
 using MongoDB.Driver.Builders;
 using MongoDB.Bson.Serialization.Attributes;
 using SharpCompress.Writers;
-using BunkerGame.Database;
+using BunkerGame.Server;
+using BunkerGame.GameRules;
+using BunkerGame.ClassLobby;
 
-namespace BunkerGame.Database
+namespace BunkerGame.Server
 {
     public class ServerObject
     {
@@ -60,7 +62,6 @@ namespace BunkerGame.Database
             }
             else 
             {
-                Console.WriteLine("Connection successfull!");
                 BodyType = DatabaseControll.GetListDocumentsAsync<characteristic>("BodyType_Hero").Result;
                 FurtherInformation = DatabaseControll.GetListDocumentsAsync<characteristic>("FurtherInformation_Hero").Result;
                 Hobbies = DatabaseControll.GetListDocumentsAsync<characteristic>("Hobbies_Hero").Result;
@@ -69,6 +70,7 @@ namespace BunkerGame.Database
                 Luggage = DatabaseControll.GetListDocumentsAsync<characteristic>("Luggage_Hero").Result;
                 Phobia = DatabaseControll.GetListDocumentsAsync<characteristic>("Phobia_Hero").Result;
                 Profession = DatabaseControll.GetListDocumentsAsync<characteristic>("Profession_Hero").Result;
+                Console.WriteLine("Connection successfull!");
             }
             Console.ReadLine();
         }
@@ -102,7 +104,7 @@ namespace BunkerGame.Database
         /// <param name="id">Id подключения</param>
         protected internal void RemoveConnection(string id)
         {
-            ClientObject? client = AllActiveClients.FirstOrDefault(x => x.id == id);
+            ClientObject? client = AllActiveClients.FirstOrDefault(x => x.client_id == id);
             if (client != null) AllActiveClients.Remove(client);
             client?.Close();
         }
@@ -158,13 +160,13 @@ namespace BunkerGame.Database
         /// <param name="message"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        protected internal async Task BroadcastMessageForAllClientsInLobbyAsync<T>(string indexLobby, int indexMessage, params T[] Object)
+        protected internal async Task BroadcastMessageForAllClientsInLobbyAsync<T>(string indexLobby, int indexMessage, string dropUserName = null, params T[] Object)
         {
             foreach (var player in AllActiveLobby.Find(x => x.Index == indexLobby).AllHero)
             {
                 string? message = null;
-
-                await player.client.streamWriter.WriteLineAsync(indexMessage.ToString());
+                if(player.user.UserName != dropUserName)
+                    await player.client.streamWriter.WriteLineAsync(indexMessage.ToString());
 
                 if (Object.Length > 0)
                 {
@@ -177,7 +179,7 @@ namespace BunkerGame.Database
                 await player.client.streamWriter.FlushAsync();
             }
         }
-
+        
 
         protected internal async Task<bool> CreateNewProfile(string message)
         {
@@ -328,7 +330,7 @@ namespace BunkerGame.Database
                 if (newUser is null || findLobby.Settings.Password != passwordLobby) return false;
 
 
-                InfoAboutPlayer? newPlayerInLobby = new InfoAboutPlayer()
+                Player? newPlayerInLobby = new Player()
                 {
                     user = newUser,
                     hero = new Hero(),
@@ -351,20 +353,20 @@ namespace BunkerGame.Database
 
 
 
-        protected internal async Task<bool> ChangeReadiness(string indexLobby, string userLogin, bool state)
+        protected internal async Task<bool> ChangeReadiness(string indexLobby, string client_id, bool state)
         {
-            if (indexLobby is null || userLogin is null) return false;
+            if (indexLobby is null || client_id is null) return false;
 
             var lobby = AllActiveLobby.Find(x => x.Index == indexLobby);
 
-            lobby.AllHero.Find(x => x.user.Login == userLogin).isReady = state;
+            lobby.AllHero.Find(x => x.client.client_id == client_id).isReady = state;
             foreach (var player in lobby.AllHero)
             {
                 if (player.isReady) continue;
                 return true;
             }
             //Здесь выполняется если все игроки в комнате будут готовы.
-            if (lobby.AllHero.Count == lobby.Settings.MaxPlayers)
+            //if (lobby.AllHero.Count == lobby.Settings.MaxPlayers)
                 StartGame(indexLobby);
 
             return true;
@@ -391,22 +393,105 @@ namespace BunkerGame.Database
             }
             return (T)new object();
         }
-
+        
+        ///Пересоздание характеристики по индексу, список игроков
 
         private async Task StartGame(string indexLobby)
         {
             Lobby? lobby = AllActiveLobby.Find(x => x.Index == indexLobby);
+            if (lobby is null) return;
+
+
+            lobby.WorldEvent = "Падение метеорита. " +
+                "Крупный метеорит попал в Землю, " +
+                "что приводит к глобальным разрушениям и смене климата," +
+                " что вызвало массовые вымирание среди животных и растений," +
+                " не способных приспособиться к новым условиям. " +
+                "После выхода из бункера на планете вечная зима.";
+            lobby.NewBunker = new Lobby.BunkerInfo()
+            {
+                Contry = "Авганистан",
+                Items = new string[] { "Видеопроигрыватель", "Книги по психологии", "Успокоительные препараты" },
+                Equipment = new string[] { "Библиотека", "Кухня-столовая" },
+                InBunkerLive = "Крысы",
+            };
+
+
+
             lobby.StartTime = $"{DateTime.Now}";
             lobby.IsStart = true;
 
             foreach (var player in lobby.AllHero)
             {
                 player.hero = player.client.GenerateHero().Result;
-                SendMessageAsync<Hero>(player.client, 100, player.hero);
+                SendMessageAsync<string>(player.client, 100, JsonSerializer.Serialize(player.hero) , lobby.WorldEvent, JsonSerializer.Serialize(lobby.NewBunker));
             }
-
-            Console.WriteLine(SaveLobbyInDatabase(indexLobby));
+            Console.WriteLine($"Lobby {lobby.Index} is started");
+            ///Здесь стоит показать различные заставки/начала [-]
+            ///Также нужно сгенерировать ситуации, бункер, подзадачи [-]
+            ///Запустить таймер на ознакомление со всей имеющейся информацией [-]
+            ///Запуск раундов по игровым правилам(GameRules) [-]
+            GameRules.GameRules test = new GameRules.GameRules();
+            test.CountRounds = (byte)MathF.Ceiling(lobby.Settings.MaxPlayers / 2);
+            test.round = new Round(1, 2, 60, lobby.Settings.MaxPlayers, 13);
+            while (test.CountRounds > test.round.RoundNumber)
+            {
+                await Timer(test.round,lobby);
+                test.round = new Round((byte)(test.round.RoundNumber+1), 2, 60, lobby.Settings.MaxPlayers, 13);
+            }
+            
         }
+        private async Task Timer(Round round, Lobby lobby)
+        {
+            byte time = round.TimeInSecondsPerStep;
+            round.StepNumber = 0;
+
+            while (true)
+            {
+                await Task.Delay(1000);
+                time++;
+
+                if (time < round.TimeInSecondsPerStep) continue;
+
+                round.StepNumber++;
+                time = 0;
+                //Здесь меняется очередь игрока
+                Console.WriteLine($"Player #{round.StepNumber} start step");
+                BroadcastMessageForAllClientsInLobbyAsync(lobby.Index, 105, null, lobby.AllHero[round.StepNumber-1].user.Login);
+
+
+                if (round.StepNumber > round.CountStep)
+                {
+                    //Здесь завершается раунд и должен начинаться новый
+                    Console.WriteLine($"Round #{round.RoundNumber} end");
+                    return;
+                }
+
+            }
+        }
+        /// <summary>
+        /// Изменить видимость характеристики
+        /// </summary>
+        /// <param name="indexLobby">Лобби, в котором происходят действия</param>
+        /// <param name="client_id">Имя пользователя, который открывает характеристику</param>
+        /// <param name="indexCharacteristics">Индекс характеристики</param>
+        /// <returns>true - характеристика успешно показана, false - ошибка в ходных данных, либо данная характеристика уже открыта</returns>
+        protected internal async Task<bool> ChangeVisibleInfo(string indexLobby, string client_id, byte[] indexCharacteristics)
+        {
+            if (indexCharacteristics is null || indexLobby is null || client_id is null) return false;
+            var lobby = AllActiveLobby.Find(x => x.Index == indexLobby);
+
+            string[] characteristic = lobby.AllHero.Find(x => x.client.client_id == client_id).ReturnCharacteristics(indexCharacteristics).Result;
+            for (int i = 0; i < indexCharacteristics.Length; i++)
+            {
+                await BroadcastMessageForAllClientsInLobbyAsync<string>(indexLobby, 110, null /*client_id*/,lobby.AllHero.Find(x => x.client.client_id == client_id).user.Login, indexCharacteristics[i].ToString(), characteristic[i]);
+            }
+            
+
+
+            return true;
+        }
+
         private async Task EndGame(string message)
         {
             Lobby? newLobby = JsonSerializer.Deserialize<Lobby>(message);
@@ -415,7 +500,7 @@ namespace BunkerGame.Database
     }
     public class ClientObject
     {
-        public string id { get; } = Guid.NewGuid().ToString();
+        public string client_id { get; } = Guid.NewGuid().ToString();
         protected internal string ip { get; }
         protected internal StreamWriter streamWriter { get; }
         protected internal StreamReader streamReader { get; }
@@ -436,6 +521,9 @@ namespace BunkerGame.Database
         {
             try
             {
+                //Отправляем клиенту его id
+                await server.SendMessageAsync(this, 1, client_id);
+
                 while (true)
                 {
                     var CommandForServer = await streamReader.ReadLineAsync();
@@ -530,7 +618,6 @@ namespace BunkerGame.Database
                             //Здесь получаем пароль, который ввел пользователь, для подключения к лобби
                             data_3 = await streamReader.ReadLineAsync();
 
-                            Console.WriteLine(data_3);
                             if (await server.FirstConnectLobby(data_1, data_2, data_3, this))
                             {
                                 var lobby = new Lobby(server.AllActiveLobby.Find(x => x.Index == data_1));
@@ -555,9 +642,22 @@ namespace BunkerGame.Database
                                 await server.SendMessageAsync<string>(this, 50);
                             else
                                 await server.SendMessageAsync<string>(this, 51);
-
                             break;
 
+
+
+                        case "VISIBLE_INFO":
+                            //Индекс лобби
+                            data_1 = await streamReader.ReadLineAsync();
+                            //Индекс игрока
+                            data_2 = await streamReader.ReadLineAsync();
+                            //Индекс информации, у которой меняется видимость
+                            data_3 = await streamReader.ReadLineAsync();
+                            if(!server.ChangeVisibleInfo(data_1, data_2, new byte[] { Convert.ToByte(data_3) } ).Result)
+                                //await server.SendMessageAsync<string>(this, 111);
+                            //else
+                                await server.SendMessageAsync<string>(this, 112);
+                            break;
 
                         //Если клиент прислал неизвестный запрос
                         default:
@@ -571,15 +671,14 @@ namespace BunkerGame.Database
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                server.RemoveConnection(id);
+                server.RemoveConnection(client_id);
             }
             finally
             {
                 Console.WriteLine($"Клиент {ip} отключен");
                 client.Close();
                 //Отключаем клиент от сервера
-                server.RemoveConnection(id);
-
+                server.RemoveConnection(client_id);
             }
             
         }
@@ -599,7 +698,7 @@ namespace BunkerGame.Database
             ).Result;
 
 
-            hero.Profession_Hero = ServerObject.GetRandomIndex(ServerObject.Profession).Result.translation[0].Profession;
+            hero.Profession_Hero = ServerObject.GetRandomIndex(ServerObject.Profession).Result.translation[1].Profession;
                 hero.ExperienceProfession_Hero = (byte)ServerObject.GetRandomData<int>
                 ((5, 1, 5),     //5% от 1 месяца до 5 месяцев
                 (10, 6, 11),    //10% от 6 месяцев до 11 месяцев
@@ -610,12 +709,12 @@ namespace BunkerGame.Database
                 ).Result;
 
             hero.Sex_Hero = ServerObject.GetRandomData<bool>
-            ((50, true, 0), //50% мужчина
-            (50, false, 0)  //50% женщина
+            ((50, true, 0), //50% мужчина - true
+            (50, false, 0)  //50% женщина - false
             ).Result;
 
 
-            hero.Hobbies_Hero = ServerObject.GetRandomIndex(ServerObject.Hobbies).Result.translation[0].Profession;
+            hero.Hobbies_Hero = ServerObject.GetRandomIndex(ServerObject.Hobbies).Result.translation[1].Profession;
                 hero.ExperienceHobbies_Hero = (byte)ServerObject.GetRandomData<int>
                 ((5, 1, 5),     //5% от 1 месяца до 5 месяцев
                 (10, 6, 11),    //10% от 6 месяцев до 11 месяцев
@@ -625,9 +724,9 @@ namespace BunkerGame.Database
                 (5, 180, 480)   //5% от 15 лет до 40 лет
                 ).Result;
 
-            hero.Luggage_Hero = ServerObject.GetRandomIndex(ServerObject.Luggage).Result.translation[0].Profession;
+            hero.Luggage_Hero = ServerObject.GetRandomIndex(ServerObject.Luggage).Result.translation[1].Profession;
 
-            hero.HealthCondition_Hero = ServerObject.GetRandomIndex(ServerObject.HealthCondition).Result.translation[0].Profession;
+            hero.HealthCondition_Hero = ServerObject.GetRandomIndex(ServerObject.HealthCondition).Result.translation[1].Profession;
             hero.HealthPoint_Hero = (byte)ServerObject.GetRandomData<int>
             ((15, 0, 0),      //15% 0 => болезни нет
             (5, 1, 15),       //5% тяжесть от 1% до 15%  
@@ -638,7 +737,7 @@ namespace BunkerGame.Database
             (3, 91, 99)       //3% тяжесть от 91% до 99%
             ).Result;
 
-            hero.Phobia_Hero = ServerObject.GetRandomIndex(ServerObject.Phobia).Result.translation[0].Profession;
+            hero.Phobia_Hero = ServerObject.GetRandomIndex(ServerObject.Phobia).Result.translation[1].Profession;
             hero.PhobiaPercentage_Hero = (byte)ServerObject.GetRandomData<int>
             ((35, 0, 0),      //35% 0 => фобии нет
             (5, 1, 15),       //5% тяжесть от 1% до 15%  
@@ -650,18 +749,18 @@ namespace BunkerGame.Database
             ).Result;
 
 
-            hero.HumanTrait_Hero = ServerObject.GetRandomIndex(ServerObject.HumanTrait).Result.translation[0].Profession;
+            hero.HumanTrait_Hero = ServerObject.GetRandomIndex(ServerObject.HumanTrait).Result.translation[1].Profession;
 
 
-            hero.FurtherInformation_Hero = ServerObject.GetRandomIndex(ServerObject.FurtherInformation).Result.translation[0].Profession;
+            hero.FurtherInformation_Hero = ServerObject.GetRandomIndex(ServerObject.FurtherInformation).Result.translation[1].Profession;
 
 
-            hero.BodyType_Hero = ServerObject.GetRandomIndex(ServerObject.BodyType).Result.translation[0].Profession;
+            hero.BodyType_Hero = ServerObject.GetRandomIndex(ServerObject.BodyType).Result.translation[1].Profession;
             hero.BodyPrecentage_Hero = 3;
             return hero;
         }
 
-       
+        
 
 
         /// <summary>
@@ -675,211 +774,24 @@ namespace BunkerGame.Database
         }
     }
 
-    public class Database
-    {
-
-        internal protected MongoClient client;
-        internal IMongoDatabase database;
-        internal string dbName;
-
-        public Database(string _dbName, string _connectString = "mongodb://localhost:27017")
-        {
-
-            client = new MongoClient(_connectString);
-            database = client.GetDatabase(_dbName);
-            dbName = _dbName;
-        }
-        public async Task AddNewDocumentAsync<T>(string _collectionName, T _collectionData)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            await collection.InsertOneAsync(_collectionData);
-        }
-        public async Task<List<T>> GetListDocumentsAsync<T>(string _collectionName)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            using var cursor = await collection.FindAsync(new BsonDocument());
-            List<T> elements = cursor.ToList();
-            return elements;
-        }
-        public async Task<List<T>> GetListDocumentsAsync<T>(string _collectionName, BsonDocument filter)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            using var cursor = await collection.FindAsync(filter);
-            List<T> elements = cursor.ToList();
-            return elements;
-        }
-        public async Task<bool> IsDocumentExistsAsync<T>(string _collectionName, BsonDocument filter)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            using var cursor = await collection.FindAsync(filter);
-            return cursor.ToList().Count > 0;
-        }
-        public async Task<long> GetCountDocumentAsync(string _collectionName) => await database.GetCollection<BsonDocument>(_collectionName).CountDocumentsAsync(new BsonDocument());
-        public async Task<DeleteResult> DeleteDocumentAsync<T>(string _collectionName, BsonDocument filter)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            return await collection.DeleteOneAsync(filter);
-        }
-        public async Task<bool> UpdateDocumentAsync<T>(string _collectionName, BsonDocument filter, BsonDocument update)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            var result = await collection.UpdateOneAsync(filter, update);
-
-            return result.ModifiedCount > 0;
-        }
-        /*
-        public async Task<string> UploadFile<T>(string _collectionName, string path)
-        {
-            var collection = database.GetCollection<T>(_collectionName);
-            var picture = File.ReadAllBytes(path);
-
-            //var fB = File.ReadAllBytes(@"C:\rab\kot.jpg");
-            string encodedFile = Convert.ToBase64String(picture);
-
-        }
-        */
-    }
 }
 /// <summary>
 /// [BsonIgnoreExtraElements] для фикса ошибки, если поля не принципиальны, подробнее по ссылке
 /// https://metanit.com/sharp/mongodb/1.7.php
 /// </summary>
-
-public class User
-{
-    public ObjectId Id { get; set; }
-    public string? UserName { get; set; }
-    public string? Login { get; set; }
-    public string? Password { get; set; }
-    public string? AvatarBase64 { get; set; }
-}
-public class Lobby
-{
-    public ObjectId Id { get; set; }
-    public string? Index { get; set; }
-    public List<InfoAboutPlayer> AllHero { get; set; }
-    public SettingsLobby Settings { get; set; }
-    public bool IsStart { get; set; }
-    public bool IsEnd { get; set; }
-    public string? StartTime { get; set; }
-    public string? EndTime { get; set; }
-    public Lobby(){}
-    public Lobby(Lobby? oldLobby)
-    {
-        this.Id = oldLobby.Id;
-        this.Index = oldLobby.Index;
-        this.AllHero = oldLobby.AllHero;
-        this.Settings = oldLobby.Settings;
-        this.IsStart = oldLobby.IsStart;
-        this.IsEnd = oldLobby.IsEnd;
-        this.StartTime = oldLobby.StartTime;
-        this.EndTime = oldLobby.EndTime;
-    }
-    /// <summary>
-    /// Генерирует строку
-    /// </summary>
-    /// <param name="length">длина сгенерированной строки</param>
-    /// <returns>Сгенерированная строка</returns>
-    public string GeneratingIndex(byte length = 16)
-    {
-        Random random = new Random();
-        string RandomString = string.Empty;
-        
-        while (length-- > 0) RandomString += (char)random.Next(33, 123);
-
-        return RandomString;
-    }
-}
-public class Hero
-{
-    public byte? Age_Hero { get; set; }
-
-    public string? Profession_Hero { get; set; }
-    private byte? experienceProfession_Hero { get; set; }
-    public byte? ExperienceProfession_Hero { 
-        get => experienceProfession_Hero; 
-        set { experienceProfession_Hero = ((Age_Hero-16) >= MathF.Ceiling((float)value/12f)) ? value : (byte)Math.Min((int)(Age_Hero - 16),1); } 
-    }
-
-
-    public bool? Sex_Hero { get; set; }
-
-
-    public string? Hobbies_Hero { get; set; }
-    private byte? experienceHobbies_Hero { get; set; }
-    public byte? ExperienceHobbies_Hero {
-        get => experienceHobbies_Hero;
-        set { experienceHobbies_Hero = ((Age_Hero - 16) >= MathF.Ceiling((float)value / 12f)) ? value : (byte)Math.Min((int)(Age_Hero - 16), 1); }
-    }
-
-
-    public string? Luggage_Hero { get; set; }
-
-    public string? HealthCondition_Hero { get; set; }
-    private byte? healthPoint_Hero { get; set; }
-    public byte? HealthPoint_Hero 
-    { 
-        get => healthPoint_Hero;
-        set {
-
-            healthPoint_Hero = (!ServerObject.HealthCondition.Find(x => x.translation[0].Profession == HealthCondition_Hero).Whether_Measured)
-                ? 0
-                : value;
-            HealthCondition_Hero = (healthPoint_Hero == 0) ? "Нет болезней" : HealthCondition_Hero;
-        }
-    }
-
-    public string? Phobia_Hero { get; set; }
-    private byte? phobiaPercentage_Hero { get; set; }
-    public byte? PhobiaPercentage_Hero
-    {
-        get => phobiaPercentage_Hero;
-        set
-        {
-
-            phobiaPercentage_Hero = (!ServerObject.Phobia.Find(x => x.translation[0].Profession == Phobia_Hero).Whether_Measured)
-                ? 0
-                : value;
-            Phobia_Hero = (phobiaPercentage_Hero == 0) ? "Нет фобии" : Phobia_Hero;
-        }
-    }
-
-    public string? HumanTrait_Hero { get; set; }
-
-    public string? FurtherInformation_Hero { get; set; }
-
-    public string? BodyType_Hero { get; set; }
-    public byte? BodyPrecentage_Hero { get; set; }
-}
-
-[System.Serializable]
-public class SettingsLobby
-{
-    public string Name { get; set; }
-    public byte MaxPlayers { get; set; }
-    public bool isPrivate { get; set; }
-    public string Password { get; set; }
-}
-[System.Serializable]
-[BsonIgnoreExtraElements]
-public class InfoAboutPlayer
-{
-    public Hero hero { get; set; }
-    public User user { get; set; }
-    public ClientObject client;
-    public bool isReady { get; set; }
-}
-
-
-
-public class translation   
-{
-    public string language { get; set; }
-    public string Profession { get; set; }
-}
+/// <summary>
+/// Возможно переименовать и переписать класс
+/// </summary>
 public class characteristic
 {
     public ObjectId Id { get; set; }
-    public translation[] translation { get; set; }
+    public Text[] translation { get; set; }
     public bool Whether_Measured { get; set; }
+
+
+    public class Text
+    {
+        public string language { get; set; }
+        public string Profession { get; set; }
+    }
 }

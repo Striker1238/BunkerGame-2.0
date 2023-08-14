@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using BunkerGame.ClassHero;
-public class Lobby_INSPECTOR : MonoBehaviour
+public class LobbyController : MonoBehaviour
 {
     [Header("Lobby objects")]
     public GameObject LobbyPrefab;

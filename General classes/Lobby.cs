@@ -26,9 +26,22 @@ namespace BunkerGame.ClassLobby
         public string? Index;
         public List<InfoAboutPlayer> AllHero = new List<InfoAboutPlayer>();
         public SettingsLobby Settings;
+
+        public string WorldEvent;
+        public BunkerInfo NewBunker;
+
+
         public bool IsStart;
         public bool IsEnd;
         public string? StartTime;
         public string? EndTime;
+    }
+    [System.Serializable]
+    public class BunkerInfo
+    {
+        public string Contry;
+        public string[] Items;
+        public string[] Equipment;
+        public string InBunkerLive;
     }
 }

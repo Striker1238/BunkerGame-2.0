@@ -22,13 +22,12 @@ using BunkerGame.ClassHero;
 /// </summary>
 public class Client_To_Scripts_Bridge : MonoBehaviour
 {
-    [Header("Client stats")]
-    public bool isConnectToServer;
+    
 
     /// <summary>
     /// Игрок - игровой объект, который управляет основными скриптами
     /// </summary>
-    [HideInInspector] public Player ThisPlayer;
+     public Player ThisPlayer;
 
     [Header("Scenes Controller")]
     public ScenesControll scenesControll;
@@ -67,65 +66,63 @@ public class Client_To_Scripts_Bridge : MonoBehaviour
     public void GetListLobby() => ThisClient.CreateMessageForServer<Lobby>(20);
     public void CreateLobby(Lobby newLobby) => ThisClient.CreateMessageForServer(21, newLobby);
     public void ConnectToLobby(string indexLobby, string passwordLobby) => ThisClient.CreateMessageForServer(22, indexLobby, ThisPlayer.UserInfo.Login, passwordLobby);
-    public void ChangeReadiness(string indexLobby, bool state) => ThisClient.CreateMessageForServer(30, indexLobby, ThisPlayer.UserInfo.Login, state?"1":"0");
-
-
+    public void ChangeReadiness(string indexLobby, bool state) => ThisClient.CreateMessageForServer(30, indexLobby, ThisPlayer.client_id, state?"1":"0");
+    public void ShowCharacteristic(string indexLobby, string characteristicIndex) => ThisClient.CreateMessageForServer(100, indexLobby, ThisPlayer.client_id, characteristicIndex);
     public void ClientDisconnect() => ThisClient.CreateMessageForServer<string>(0);
     #endregion
 
 
     #region GET
-    public void isCorrectData(string data) => CreateClientObj(data);
-    public void isChangeAvatar(string data)
+    public void isCorrectData(string[] data)
     {
-        ThisPlayer.UserInfo.AvatarBase64 = data;
+        //if (ThisPlayer != null) return; <- эта хрень не работает =\
+        ThisPlayer = new Player();
+        ThisPlayer.UserInfo = JsonUtility.FromJson<User>(data[0]);
+        ThisPlayer.isConnectToServer = true;
+
+
+        ThisPlayer.client_id = ThisClient.client_id;
+
+        scenesControll.ChangeScene("ListLobbyScene");
+    }
+    public void isChangeAvatar(string[] data)
+    {
+        ThisPlayer.UserInfo.AvatarBase64 = data[0];
 
         if (FindObjectsOfType<ProfileControll>().Length > 0)
             FindObjectOfType<ProfileControll>().LoadingProfileData(ThisPlayer.UserInfo);
     }
-    public void isCreatedNewLobby(string data)
+    public void isCreatedNewLobby(string[] data)
     {
-        FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby = JsonUtility.FromJson<Lobby>(data).Index;
+        FindObjectOfType<LobbyController>().IndexSelectLobby = JsonUtility.FromJson<Lobby>(data[0]).Index;
 
-        ConnectToLobby(FindObjectOfType<Lobby_INSPECTOR>().IndexSelectLobby, FindObjectOfType<Lobby_INSPECTOR>().PasswordLobby_IF.text);
+        ConnectToLobby(FindObjectOfType<LobbyController>().IndexSelectLobby, FindObjectOfType<LobbyController>().PasswordLobby_IF.text);
     }
-    public void AddLobbyInList(string data) => FindObjectOfType<Lobby_INSPECTOR>().AddLobbyInList(data);
+    public void AddLobbyInList(string[] data) => FindObjectOfType<LobbyController>().AddLobbyInList(data[0]);
     /// <summary>
     /// Вызывается если к лобби подключился новый игрок
     /// </summary>
     /// <param name="data"></param>
-    public void ThisPlayerConnectToLobby(string data)
+    public void ThisPlayerConnectToLobby(string[] data)
     {
-        ThisPlayer.ActiveLobby = JsonUtility.FromJson<Lobby>(data);
+        ThisPlayer.ActiveLobby = JsonUtility.FromJson<Lobby>(data[0]);
         //Меняем сцену
         FindObjectOfType<ScenesControll>().ChangeScene(3);
     }
-    public void ConnectNewPlayerToLobby(string data)
+    public void ConnectNewPlayerToLobby(string[] data)
     {
-        var newUser = JsonUtility.FromJson<User>(data);
-        Debug.Log("Aboba2");
+        var newUser = JsonUtility.FromJson<User>(data[0]);
         FindObjectOfType<GameController>().OnNewConnectToLobby(newUser);
     }
 
-
-    public void StartGame(string data)
+    public void StartGame(string[] data)
     {
-        ThisPlayer.ActiveLobby.AllHero.Find(x => x.user.UserName == ThisPlayer.UserInfo.UserName).hero = JsonUtility.FromJson<Hero>(data);
-        Debug.Log("START GAME");
+        ThisPlayer.ActiveLobby.AllHero.Find(x => x.user.UserName == ThisPlayer.UserInfo.UserName).hero = JsonUtility.FromJson<Hero>(data[0]);
+        ThisPlayer.ActiveLobby.WorldEvent = data[1];
+        ThisPlayer.ActiveLobby.NewBunker = JsonUtility.FromJson<BunkerInfo>(data[2]);
+        FindObjectOfType<GameController>().StartGame();
     }
+    public void AnotherPlayerShowCharacteristic(string[] data) => FindObjectOfType<GameController>().AnotherPlayerShowCharacteristic(data[0], data[1], data[2]);
+    public void NewPlayerTurn(string[] data) => FindObjectOfType<GameController>().NewPlayerTurn(data[0]);
     #endregion
-
-
-
-
-
-
-    public async void CreateClientObj(string data)
-    {
-        //if (ThisPlayer != null) return; <- эта хрень не работает =\
-        ThisPlayer = new Player();
-        ThisPlayer.UserInfo = JsonUtility.FromJson<User>(data);
-        isConnectToServer = true;
-        scenesControll.ChangeScene("ListLobbyScene");
-    }
 }

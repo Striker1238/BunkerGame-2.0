@@ -12,11 +12,11 @@ using BunkerGame.ClassLobby;
 
 namespace BunkerGame.ClassClient
 {
-    public delegate void RequestMethod(string val);
+    public delegate void RequestMethod(string[] val);
     public struct Request
     {
         public RequestMethod method;
-        public string data;
+        public string[] data;
     }
     /// <summary>
     /// Client хранит адрес сервера, 
@@ -46,10 +46,12 @@ namespace BunkerGame.ClassClient
             { 22,"CONNECT_LOBBY"},
             { 23,"DISCONNECT_LOBBY"},
             { 30,"CHANGE_READINESS"},
+            { 100,"VISIBLE_INFO"},
         };
         public Dictionary<int, string> TypeGET { get; } = new Dictionary<int, string>()
         {
             { -1,"Incorrect request"},
+            { 1,"Server send my id"},
             { 10,"Account created successfully!"},
             { 11,"An account with this login already exists!"},
             { 12,"Account information is correct!"},
@@ -66,15 +68,23 @@ namespace BunkerGame.ClassClient
             { 26,"New player has been connected to lobby!"},
 
             { 50,"State has been changed"},
-            { 51,"Error"},
+            { 51,"Failed to change readiness"},
             { 100,"Start game"},
+            { 105,"Turn next player"},
+            { 110,"One of the players showed a characteristic"},
+            { 111,"Characteristic successfully shown"},
+            { 112,"Unsuccessful attempt to send stat to other players"},
         };
 
         static Client_To_Scripts_Bridge _ThisClient;
         TcpClient tcpClient;
 
 
+        public string client_id;
+
         public Queue<Request> queueMethods = new Queue<Request>();
+
+
 
         public async void Start(Client_To_Scripts_Bridge client_INSPECTOR)
         {
@@ -145,24 +155,28 @@ namespace BunkerGame.ClassClient
                 try
                 {   
                     string? message = await streamReader.ReadLineAsync();
-                    string? data = null;
+                    string? data_1,data_2, data_3, data_4 = null;
                     Request _request = new Request();
                     Debug.Log("Server send message");
                     
                     switch (Convert.ToInt32(message))
                     {
+                        case 1:
+                            //Получение индекса клиента, которое создает и присваевает сервер
+                            client_id = await streamReader.ReadLineAsync();
+                            break;
                         case 10:
                             //Пока пусто, тк тут результат регистрации
                             break;
                         case 12:
                             //Получаем информацию о корректных данных пользователя которым логинимся
-                            data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.isCorrectData, data = data };
+                            data_1 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.isCorrectData, data = new string[] { data_1 } };
                             queueMethods.Enqueue(_request);
                             break;
                         case 14:
                             //Получаем информацию об успешном обновлении данных (пока что только аватар) 
-                            _request = new Request { method = _ThisClient.isChangeAvatar, data = "" }; //Посмотреть где у меня беруться данные, оттуда и будем забирать
+                            _request = new Request { method = _ThisClient.isChangeAvatar }; //Посмотреть где у меня беруться данные, оттуда и будем забирать
                             queueMethods.Enqueue(_request);
                             break;
                         case 20:
@@ -171,37 +185,52 @@ namespace BunkerGame.ClassClient
                             //Начинаем получать информацию о каждом активном лобби
                             for (int i = 0; i < Convert.ToUInt32(countActiveLobby); i++)
                             {
-                                data = await streamReader.ReadLineAsync();
-                                _request = new Request { method = _ThisClient.AddLobbyInList, data = data };
+                                data_1 = await streamReader.ReadLineAsync();
+                                _request = new Request { method = _ThisClient.AddLobbyInList, data = new string[] { data_1 } };
                                 queueMethods.Enqueue(_request);
                             }
                             break;
                         case 22:
                             //Получаем успешность создания лобби, если успешно создано то запускаем у пользователя открытия лобби
-                            data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.isCreatedNewLobby, data = data };
+                            data_1 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.isCreatedNewLobby, data = new string[] { data_1 } };
                             queueMethods.Enqueue(_request);
-
                             break;
-
-
-                        //возможно объеденить методы 11 и 13
                         case 24:
-                            data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.ThisPlayerConnectToLobby, data = data };
+                            data_1 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.ThisPlayerConnectToLobby, data = new string[] { data_1 } };
                             queueMethods.Enqueue(_request);
                             break;
                         case 26: ///<- данный метод может сработать только тогда, когда игрок находится в каком то лобби
                             //Сервер сообщает что подключился новый пользователь к лобби
-                            data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.ConnectNewPlayerToLobby, data = data };
+                            data_1 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.ConnectNewPlayerToLobby, data = new string[] { data_1 } };
                             queueMethods.Enqueue(_request);
                             break;
-
-
                         case 100:
-                            data = await streamReader.ReadLineAsync();
-                            _request = new Request { method = _ThisClient.StartGame, data = data };
+                            //Старт игры, получаем сгенерированные для нас характеристики
+                            data_1 = await streamReader.ReadLineAsync();
+                            //+ получаем информацию о бункере
+                            data_2 = await streamReader.ReadLineAsync();
+                            //+ получаем информацию о происшествии с выставлением нужного изображения
+                            data_3 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.StartGame, data = new string[] { data_1, data_2 , data_3 } };
+                            queueMethods.Enqueue(_request);
+                            break;
+                        case 105:
+                            //Логин игрока, чей ход начался
+                            data_1 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.NewPlayerTurn, data = new string[] { data_1 } };
+                            queueMethods.Enqueue(_request);
+                            break;
+                        case 110:///Какой-то клиент показывает свою характеристику
+                            //Игрок
+                            data_1 = await streamReader.ReadLineAsync();
+                            //Индексы характеристик
+                            data_2 = await streamReader.ReadLineAsync();
+                            //Характеристики
+                            data_3 = await streamReader.ReadLineAsync();
+                            _request = new Request { method = _ThisClient.AnotherPlayerShowCharacteristic, data = new string[] { data_1, data_2 , data_3} };
                             queueMethods.Enqueue(_request);
                             break;
                         default:
